@@ -1,159 +1,295 @@
-
-import { ArrowRight, Shield, Zap, BarChart3 } from "lucide-react";
+import {
+  ArrowRight,
+  Plane,
+  Settings,
+  ChartNoAxesColumnIncreasing,
+  ShieldCheck,
+  Users,
+  Clock,
+  Headset,
+} from "lucide-react";
 
 export default function LandingPage() {
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="fixed w-full bg-white/90 backdrop-blur-md shadow-sm z-50">
-        <div className="container mx-auto px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-900">
-            Global Airport
-          </h1>
+  const features = [
+    {
+      icon: Settings,
+      title: "Automatización",
+      description:
+        "Reduce tareas repetitivas y mejora la eficiencia operativa del aeropuerto.",
+    },
+    {
+      icon: ChartNoAxesColumnIncreasing,
+      title: "Analítica avanzada",
+      description:
+        "Consulta métricas e información para tomar mejores decisiones.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Seguridad",
+      description:
+        "Protege la información y administra los accesos de forma segura.",
+    },
+  ];
 
-          <div className="hidden md:flex gap-8 text-gray-600">
-            <a href="#features">Acerca de nosotros</a>
-            <a href="#benefits">Misión</a>
-            <a href="#contact">Visión</a>
+  const stats = [
+    { icon: Users, value: "10K+", label: "Usuarios" },
+    { icon: Clock, value: "99.9%", label: "Disponibilidad" },
+    { icon: Plane, value: "70+", label: "Aeropuertos" },
+    { icon: Headset, value: "24/7", label: "Soporte" },
+  ];
+
+  return (
+    <main className="min-h-screen bg-white text-slate-700">
+      {/* Navegación */}
+      <header className="absolute left-0 top-0 z-20 w-full px-4 pt-5 md:px-8 md:pt-8">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-2xl border border-white/70 bg-white/90 px-5 py-4 shadow-lg backdrop-blur-md md:px-8">
+          <a
+            href="#inicio"
+            className="flex shrink-0 items-center gap-3 text-2xl font-extrabold tracking-tight text-blue-950 md:text-3xl"
+          >
+            <Plane className="h-8 w-8 -rotate-12 text-sky-500" />
+            <span>
+              Global <span className="text-sky-500">Airport</span>
+            </span>
+          </a>
+
+          <div className="hidden items-center gap-8 text-sm font-semibold text-blue-950 md:flex">
+            <a href="#nosotros" className="transition hover:text-sky-500">
+              Acerca de nosotros
+            </a>
+            <a href="#mision" className="transition hover:text-sky-500">
+              Misión
+            </a>
+            <a href="#vision" className="transition hover:text-sky-500">
+              Visión
+            </a>
           </div>
 
-          <button className="bg-sky-500 text-white px-5 py-2 rounded-lg hover:bg-sky-600 transition">
+          <a
+            href="#contacto"
+            className="shrink-0 rounded-xl bg-sky-600 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-800"
+          >
             Ingresar
-          </button>
-        </div>
-      </nav>
+          </a>
+        </nav>
+      </header>
 
-      {/* Hero */}
-      <section className="pt-36 pb-24 bg-gradient-to-br from-blue-900 via-blue-700 to-sky-500 text-white">
-        <div className="container mx-auto px-8">
-          <div className="max-w-3xl">
-            <span className="bg-white/20 px-4 py-2 rounded-full text-sm">
-              Plataforma Inteligente
+      {/* Portada con imagen de aeropuerto */}
+      <section
+        id="inicio"
+        className="relative flex min-h-[620px] items-center bg-cover bg-center pt-32 md:min-h-[700px]"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=2000&q=85')",
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/75 to-blue-950/10" />
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-16 md:px-10">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-bold text-blue-900">
+              <Plane className="h-4 w-4 text-sky-600" />
+              Global Airport
             </span>
 
-            <h1 className="text-4xl md:text-6xl font-bold mt-6 leading-tight">
-              Impulsa tu negocio con soluciones digitales modernas
+            <h1 className="mt-7 text-4xl font-extrabold leading-tight tracking-tight text-blue-950 sm:text-5xl md:text-6xl">
+              Gestión de aeropuertos{" "}
+              <span className="text-sky-600">de manera ordenada</span>
             </h1>
 
-            <p className="mt-6 text-xl text-blue-100">
+            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-700 md:text-xl">
               Automatiza procesos, analiza información en tiempo real y toma
               mejores decisiones desde una única plataforma.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <button className="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold">
-                Solicitar Demo
-              </button>
-
-              <a
-                href="#features"
-                className="border border-white px-6 py-3 rounded-lg flex items-center gap-2"
-              >
-                Ver más
-              </a>
-            </div>
+            <a
+              href="#nosotros"
+              className="mt-8 inline-flex items-center gap-3 rounded-full bg-sky-600 px-8 py-4 font-bold text-white shadow-lg transition hover:-translate-y-1 hover:bg-blue-800"
+            >
+              Comenzar ahora
+              <ArrowRight className="h-5 w-5" />
+            </a>
           </div>
         </div>
+
+        <div className="absolute bottom-0 left-0 h-2 w-full bg-gradient-to-r from-blue-950 via-sky-500 to-sky-200" />
       </section>
 
       {/* Características */}
-      <section id="features" className="py-24 bg-slate-50">
-        <div className="container mx-auto px-8">
-          <h2 className="text-4xl font-bold text-center text-blue-900 mb-16">
-            ¿Por qué elegirnos?
-          </h2>
+      <section id="nosotros" className="bg-sky-50 px-6 py-20 md:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-sm font-extrabold uppercase tracking-[0.3em] text-sky-600">
+              Soluciones
+            </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
+            <h2 className="text-3xl font-extrabold tracking-tight text-blue-950 md:text-4xl">
+              ¿Por qué elegir Global Airport?
+            </h2>
 
-              <h3 className="text-2xl font-semibold mb-3">
-                Automatización
-              </h3>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
+              Tecnología, eficiencia y seguridad para la gestión aeroportuaria.
+            </p>
+          </div>
 
-              <p className="text-gray-600">
-                Reduce tareas repetitivas y mejora la eficiencia operativa.
-              </p>
-            </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {features.map((feature) => {
+              const Icon = feature.icon;
 
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              return (
+                <article
+                  key={feature.title}
+                  className="rounded-2xl border border-sky-100 bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-xl"
+                >
+                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                    <Icon className="h-9 w-9 text-sky-600" />
+                  </div>
 
-              <h3 className="text-2xl font-semibold mb-3">
-                Analítica Avanzada
-              </h3>
+                  <h3 className="text-2xl font-bold text-blue-950">
+                    {feature.title}
+                  </h3>
 
-              <p className="text-gray-600">
-                Obtén métricas en tiempo real para respaldar tus decisiones.
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
-
-              <h3 className="text-2xl font-semibold mb-3">
-                Seguridad
-              </h3>
-
-              <p className="text-gray-600">
-                Protección de datos y acceso seguro para toda tu organización.
-              </p>
-            </div>
+                  <p className="mt-3 leading-7 text-slate-600">
+                    {feature.description}
+                  </p>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Estadísticas */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <h3 className="text-5xl font-bold text-blue-900">10K+</h3>
-              <p className="text-gray-600 mt-2">Usuarios</p>
-            </div>
+      <section className="bg-white px-6 py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
+            <p className="text-sm font-extrabold uppercase tracking-[0.3em] text-sky-600">
+              Nuestra propuesta
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold text-blue-950 md:text-4xl">
+              Una gestión más eficiente
+            </h2>
+          </div>
 
-            <div>
-              <h3 className="text-5xl font-bold text-blue-900">99.9%</h3>
-              <p className="text-gray-600 mt-2">Disponibilidad</p>
-            </div>
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            {stats.map((stat) => {
+              const Icon = stat.icon;
 
-            <div>
-              <h3 className="text-5xl font-bold text-blue-900">150+</h3>
-              <p className="text-gray-600 mt-2">Empresas</p>
-            </div>
+              return (
+                <div key={stat.label} className="text-center">
+                  <Icon className="mx-auto mb-4 h-10 w-10 text-sky-600" />
+                  <p className="text-4xl font-extrabold tracking-tight text-blue-950 md:text-5xl">
+                    {stat.value}
+                  </p>
+                  <p className="mt-3 text-base text-slate-600 md:text-lg">
+                    {stat.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
 
-            <div>
-              <h3 className="text-5xl font-bold text-blue-900">24/7</h3>
-              <p className="text-gray-600 mt-2">Soporte</p>
-            </div>
+          <p className="mt-8 text-center text-xs text-slate-400">
+            Las cifras son ilustrativas; sustitúyelas por datos reales de tu
+            proyecto antes de publicar.
+          </p>
+        </div>
+      </section>
+
+      {/* Misión */}
+      <section
+        id="mision"
+        className="relative overflow-hidden bg-blue-950 px-6 py-20 text-white md:py-24"
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-25"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1800&q=80')",
+          }}
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-900/95 to-sky-800/70" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-12 md:grid-cols-2 md:items-center">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.3em] text-sky-300">
+              Nuestra misión
+            </p>
+
+            <h2 className="mt-4 text-3xl font-extrabold leading-tight md:text-5xl">
+              Lleva tu aeropuerto al{" "}
+              <span className="text-sky-300">siguiente nivel</span>
+            </h2>
+
+            <p className="mt-6 max-w-xl text-lg leading-8 text-blue-100">
+              Facilitar la administración aeroportuaria mediante herramientas
+              tecnológicas que centralicen la información, optimicen los
+              procesos y apoyen la toma de decisiones.
+            </p>
+
+            <a
+              href="#vision"
+              className="mt-8 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 font-bold text-blue-950 transition hover:bg-sky-100"
+            >
+              Conoce nuestra visión
+              <ArrowRight className="h-5 w-5" />
+            </a>
+          </div>
+
+          <div className="rounded-3xl border border-white/20 bg-white/10 p-8 shadow-2xl backdrop-blur-sm md:p-10">
+            <Plane className="mb-6 h-12 w-12 text-sky-300" />
+            <h3 className="text-2xl font-bold">Conectamos operaciones</h3>
+            <p className="mt-4 leading-7 text-blue-100">
+              Una plataforma diseñada para reunir los procesos y la información
+              en un solo lugar, con una experiencia clara y organizada para sus
+              usuarios.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section
-        id="benefits"
-        className="py-24 bg-gradient-to-r from-blue-900 to-sky-500 text-white text-center"
-      >
-        <div className="container mx-auto px-8">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Lleva tu organización al siguiente nivel
-          </h2>
-
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Descubre una nueva forma de gestionar información y optimizar
-            procesos empresariales.
+      {/* Visión */}
+      <section id="vision" className="bg-white px-6 py-20 text-center md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-extrabold uppercase tracking-[0.3em] text-sky-600">
+            Nuestra visión
           </p>
 
-          <button className="mt-8 bg-white text-blue-900 px-8 py-4 rounded-xl font-bold hover:scale-105 transition">
-            Comenzar ahora
-          </button>
+          <h2 className="mt-4 text-3xl font-extrabold text-blue-950 md:text-4xl">
+            El futuro de la gestión aeroportuaria
+          </h2>
+
+          <p className="mt-6 text-lg leading-8 text-slate-600">
+            Convertirnos en una solución tecnológica de referencia para una
+            gestión aeroportuaria más moderna, conectada, segura y eficiente.
+          </p>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer id="contact" className="bg-blue-950 text-blue-200 py-8">
-        <div className="container mx-auto px-8 text-center">
-          © 2026 Global Airport. Todos los derechos reservados.
+      {/* Pie de página */}
+      <footer id="contacto" className="bg-[#0b1f3a] px-6 py-10 text-blue-100">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left">
+          <a
+            href="#inicio"
+            className="flex items-center gap-3 text-xl font-extrabold text-white"
+          >
+            <Plane className="h-7 w-7 text-sky-400" />
+            Global Airport
+          </a>
+
+          <p className="text-sm text-blue-200">
+            © 2026 Global Airport. Todos los derechos reservados.
+          </p>
+
+          <a
+            href="#inicio"
+            className="text-sm font-semibold transition hover:text-sky-300"
+          >
+            Volver arriba ↑
+          </a>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
