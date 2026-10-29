@@ -7,13 +7,11 @@ import Index from "../index";
 import UserManagement from './subsystems/userManagement';
 import AirportManagement from './subsystems/airportManagement';
 import AirportAdministrators from './subsystems/airportAdministrators';
+import PassengerManagement from './subsystems/passegerManagement';
 
 export default function App() {
   const path = window.location.pathname;
 
-  if (path === "/asignacion-administradores") {
-    return <AirportAdministrators />;
-  }
-
-  return <AirportManagement />;
+  
+  return <PassengerManagement />;
 }
