@@ -790,3 +790,30 @@
   gap: 10px;
   flex-shrink: 0;
 }
+
+.ua-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.ua-delete-btn:hover {
+  background: #dc2626;
+  color: #fff;
+}
+
+.ua-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}

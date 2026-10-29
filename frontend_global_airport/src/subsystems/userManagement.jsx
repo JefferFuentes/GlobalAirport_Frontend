@@ -13,6 +13,7 @@ import {
   X,
   Check,
   Plane,
+  Trash2,
 } from "lucide-react";
 import "./css/userManagement.css";
 import { History } from "lucide-react";
@@ -259,6 +260,21 @@ export default function UserManagement() {
     );
 
     setMessage(`La cuenta de ${user.name} se reactivó.`);
+  }
+
+  function deleteUser(user) {
+    const confirmed = window.confirm(
+      `¿Está seguro de eliminar al usuario "${user.name}" (${user.id})? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) return;
+
+    setUsers((current) =>
+      current.filter((item) => item.id !== user.id)
+    );
+
+    setMessage(`El usuario ${user.name} se eliminó correctamente.`);
+    setError("");
   }
 
 
@@ -561,6 +577,18 @@ export default function UserManagement() {
                           >
                             <span />
                           </button>
+
+                          <button
+                            type="button"
+                            className="ua-delete-btn"
+                            title="Eliminar usuario"
+                            aria-label={`Eliminar ${user.name}`}
+                            onClick={() => deleteUser(user)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+
                         </div>
                       </td>
                     </tr>

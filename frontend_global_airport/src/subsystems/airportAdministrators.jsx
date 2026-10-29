@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
+  Trash2,
 } from "lucide-react";
 import "./css/airportAdministrators.css";
 
@@ -164,7 +165,20 @@ export default function AirportAdministrators() {
     setUserId("");
   }
 
+  function deleteAssignment(assignment) {
+    const confirmed = window.confirm(
+      `¿Desea eliminar la asignación de ${assignment.adminName} al aeropuerto ${assignment.iata}?`
+    );
 
+    if (!confirmed) return;
+
+    setAssignments((current) =>
+      current.filter((item) => item.id !== assignment.id)
+    );
+
+    setMessage("La asignación se eliminó correctamente.");
+    setError("");
+  }
   const activeAssignments = assignments.filter((item) => {
     const admin = usersDemo.find(
       (user) => user.id === item.userId
@@ -382,40 +396,55 @@ export default function AirportAdministrators() {
                   <th>Fecha de asignación</th>
                   <th>Estado</th>
                   <th>Responsable</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
 
               <tbody>
                 {activeAssignments.map((item) => (
+
                   <tr key={item.id}>
+                    <td>
+                      <strong>{item.airportName}</strong>
+                      <small>{item.airportId} · {item.iata}</small>
+                    </td>
 
                     <td>
                       <strong>{item.adminName}</strong>
                       <small>{item.userId}</small>
                     </td>
-                    <td>{item.email}</td>
-                    <td>{item.phone}</td>
 
-                    <td>
-                      <strong>{item.adminName}</strong>
-                      <small>{item.email}</small>
-                    </td>
-                    <td>
-                      {item.date} · {item.time}
-                    </td>
+                    <td>{item.phone}</td>
+                    <td>{item.email}</td>
+                    <td>{item.date} · {item.time}</td>
+
                     <td>
                       <span className="aa-status">
                         <span />
                         {item.status}
                       </span>
                     </td>
+
                     <td>{item.responsible}</td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="aa-delete-btn"
+                        title="Eliminar asignación"
+                        aria-label={`Eliminar asignación de ${item.adminName}`}
+                        onClick={() => deleteAssignment(item)}
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </td>
                   </tr>
+
                 ))}
 
                 {activeAssignments.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="aa-empty">
+                    <td colSpan={8} className="aa-empty">
                       <UserRound size={28} />
                       <strong>No hay asignaciones todavía</strong>
                       <span>

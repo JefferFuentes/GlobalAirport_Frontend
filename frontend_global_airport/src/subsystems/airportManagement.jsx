@@ -18,6 +18,7 @@ import {
   UserRound,
   UserRoundCog,
   Globe,
+  Trash2,
 } from "lucide-react";
 import "./css/airportManagement.css";
 
@@ -268,6 +269,25 @@ export default function AirportManagement() {
     setMessage(
       `${airport.name}: estado cambiado a ${newStatus.toLowerCase()}.`
     );
+  }
+
+  function deleteAirport(airport) {
+    const confirmed = window.confirm(
+      `¿Está seguro de eliminar el aeropuerto "${airport.name}" (${airport.iata})?`
+    );
+
+    if (!confirmed) return;
+
+    setAirports((current) =>
+      current.filter((item) => item.id !== airport.id)
+    );
+
+    if (selectedAirport?.id === airport.id) {
+      setSelectedAirport(null);
+      setModal(null);
+    }
+
+    setMessage(`El aeropuerto ${airport.iata} se eliminó correctamente.`);
   }
 
   function clearFilters() {
@@ -531,6 +551,15 @@ export default function AirportManagement() {
                           onClick={() => toggleAirportStatus(airport)}
                         >
                           <span />
+                        </button>
+                        <button
+                          type="button"
+                          className="am-delete-btn"
+                          title="Eliminar aeropuerto"
+                          aria-label={`Eliminar ${airport.name}`}
+                          onClick={() => deleteAirport(airport)}
+                        >
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>

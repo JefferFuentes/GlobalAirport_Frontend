@@ -464,3 +464,22 @@
 .aa-table td {
   overflow-wrap: anywhere;
 }
+
+.aa-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.aa-delete-btn:hover {
+  background: #dc2626;
+  color: #fff;
+}
