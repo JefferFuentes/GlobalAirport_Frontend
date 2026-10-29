@@ -72,68 +72,7 @@ const modules = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-700">
-      {/* Barra lateral y contenido */}
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#0C2D57] text-white lg:flex">
-          <a
-            href="/Home"
-            className="flex items-center gap-3 border-b border-white/10 px-6 py-7"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500">
-              <Plane className="h-6 w-6" />
-            </span>
-            <span className="text-xl font-extrabold">
-              Global <span className="text-sky-300">Airport</span>
-            </span>
-          </a>
 
-          <nav className="flex-1 space-y-2 px-4 py-7">
-            <p className="mb-4 px-3 text-xs font-bold uppercase tracking-widest text-blue-200/70">
-              Menú principal
-            </p>
-
-            <a
-              href="/"
-              className="flex items-center gap-3 rounded-xl bg-sky-500 px-4 py-3 font-semibold text-white"
-            >
-              <LayoutDashboard className="h-5 w-5" />
-              Inicio
-            </a>
-
-            {modules.map((module) => {
-              const Icon = module.icon;
-
-              return (
-                <a
-                  key={module.title}
-                  href={module.path}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span>{module.title}</span>
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-2 border-t border-white/10 p-4">
-            <a
-              href="/configuracion"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 hover:bg-white/10"
-            >
-              <Settings className="h-5 w-5" />
-              Configuración
-            </a>
-
-            <a
-              href="/login"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 hover:bg-white/10"
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar sesión
-            </a>
-          </div>
-        </aside>
 
         {/* Área principal */}
         <main className="min-w-0 flex-1">
@@ -276,6 +215,5 @@ export default function Home() {
           </div>
         </main>
       </div>
-    </div>
   );
 }

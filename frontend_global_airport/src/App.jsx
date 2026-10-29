@@ -1,33 +1,45 @@
 
 import { Routes, Route } from "react-router-dom";
+import { Link } from "react-router-dom"
 
+import Layout from "./Layout";
 import LandingPage from "../LandingPage";
-import Home from "./Home";
+import Home from "./home";
 import Login from "./Login";
-import SignUp from "./SignUp";
-import Reports from "./Reports";
-import Flights from "./FlightsManagement";
-import Reservations from "./ReservationsManagement";
+import SignUp from "./signUp";
+import Reports from "./reports";
+import Flights from "./flightsManagement";
+import Reservations from "./reservationsManagement";
 import Pilots from "./pilotsManagement";
+//import Users from "./userManagement";
+//import Airports from "./airportManagement";
+//import Passengers from "./passegerManagement";
 
 function App() {
   return (
     <Routes>
-      {/* Página principal */}
+      {/* Página pública */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/Home" element={<Home />} />
 
       {/* Autenticación */}
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<SignUp />} />
 
-      {/* Módulos del sistema */}
-      <Route path="/reportes" element={<Reports />} />
-      <Route path="/vuelos" element={<Flights />} />
-      <Route path="/reservaciones" element={<Reservations />} />
-      <Route path="/pilotos" element={<Pilots />} />
+      {/* Todas estas páginas comparten Layout */}
+      <Route element={<Layout />}>
+        <Route path="/Home" element={<Home />} />
+        <Route path="/reportes" element={<Reports />} />
+        <Route path="/vuelos" element={<Flights />} />
+        <Route path="/reservaciones" element={<Reservations />} />
+        <Route path="/pilotos" element={<Pilots />} />
 
-      {/* Página para rutas inexistentes */}
+        {/* Descomentá estas rutas cuando creés los componentes */}
+        {/* <Route path="/usuarios" element={<Users />} /> */}
+        {/* <Route path="/aeropuertos" element={<Airports />} /> */}
+        {/* <Route path="/pasajeros" element={<Passengers />} /> */}
+      </Route>
+
+      {/* Página 404 */}
       <Route
         path="*"
         element={
@@ -35,17 +47,14 @@ function App() {
             <h1 className="text-5xl font-bold text-[#0C2D57]">
               404
             </h1>
-
             <p className="mt-3 text-lg text-slate-600">
               La página que buscás no existe.
             </p>
-
-            <a
-              href="/Home"
+            <Link to="/Home"
               className="mt-5 rounded-xl bg-[#0C2D57] px-5 py-3 font-semibold text-white hover:bg-[#0284C7]"
             >
               Volver al inicio
-            </a>
+            </Link>
           </div>
         }
       />

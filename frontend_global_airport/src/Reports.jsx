@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -26,57 +27,50 @@ import {
   Settings,
   LogOut
 } from "lucide-react";
+
 const modules = [
   {
+    title: "Inicio",
+    icon: LayoutDashboard,
+    path: "/Home",
+  },
+  {
     title: "Usuarios",
-    description: "Administra las cuentas, los roles y los permisos.",
     icon: Users,
-    color: "bg-sky-100 text-sky-700",
     path: "/usuarios",
   },
   {
     title: "Aeropuertos",
-    description: "Consulta y administra la información aeroportuaria.",
     icon: Building2,
-    color: "bg-blue-100 text-blue-800",
     path: "/aeropuertos",
   },
   {
     title: "Pasajeros",
-    description: "Gestiona los datos y la información de los pasajeros.",
     icon: Contact,
-    color: "bg-cyan-100 text-cyan-800",
     path: "/pasajeros",
   },
   {
     title: "Vuelos",
-    description: "Organiza los vuelos y consulta su programación.",
     icon: PlaneTakeoff,
-    color: "bg-indigo-100 text-indigo-800",
     path: "/vuelos",
   },
   {
     title: "Reservaciones",
-    description: "Administra las reservas y sus detalles.",
     icon: Ticket,
-    color: "bg-sky-100 text-sky-700",
     path: "/reservaciones",
   },
   {
     title: "Pilotos",
-    description: "Consulta y administra la información de los pilotos.",
     icon: UserRound,
-    color: "bg-blue-100 text-blue-800",
     path: "/pilotos",
   },
   {
     title: "Reportes e indicadores",
-    description: "Visualiza estadísticas y analiza los resultados.",
     icon: ChartNoAxesCombined,
-    color: "bg-cyan-100 text-cyan-800",
     path: "/reportes",
   },
 ];
+
 const reportes = [
   {
     id: 1,
@@ -174,94 +168,15 @@ export default function Reportes() {
   }, [filtro, busqueda]);
 
   return (
+    <>
+      <header className="border-b border-sky-100 bg-white px-5 py-5">
+        <h1 className="text-2xl font-bold text-[#0C2D57]">
+          Reportes e indicadores
+        </h1>
+      </header>
     <div className="min-h-screen bg-slate-50 text-slate-700">
       {/* Encabezado */}
-        <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 flex-col bg-[#0C2D57] text-white lg:flex">
-          <a
-            href="/Home"
-            className="flex items-center gap-3 border-b border-white/10 px-6 py-7"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500">
-              <Plane className="h-6 w-6" />
-            </span>
-            <span className="text-xl font-extrabold">
-              Global <span className="text-sky-300">Airport</span>
-            </span>
-          </a>
-
-          <nav className="flex-1 space-y-2 px-4 py-7">
-            <p className="mb-4 px-3 text-xs font-bold uppercase tracking-widest text-blue-200/70">
-              Menú principal
-            </p>
-
-            <a
-              href="/"
-              className="flex items-center gap-3 rounded-xl bg-sky-500 px-4 py-3 font-semibold text-white"
-            >
-              <LayoutDashboard className="h-5 w-5" />
-              Inicio
-            </a>
-
-            {modules.map((module) => {
-              const Icon = module.icon;
-
-              return (
-                <a
-                  key={module.title}
-                  href={module.path}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span>{module.title}</span>
-                </a>
-              );
-            })}
-          </nav>
-
-          <div className="space-y-2 border-t border-white/10 p-4">
-            <a
-              href="/configuracion"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 hover:bg-white/10"
-            >
-              <Settings className="h-5 w-5" />
-              Configuración
-            </a>
-
-            <a
-              href="/login"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-blue-100 hover:bg-white/10"
-            >
-              <LogOut className="h-5 w-5" />
-              Cerrar sesión
-            </a>
-          </div>
-        </aside>
-      <header className="border-b border-sky-100 bg-white px-5 py-5 md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <a
-              href="/Home"
-              aria-label="Volver al inicio"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-100 text-[#0C2D57] transition hover:bg-sky-50"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </a>
-
-            <div>
-              <p className="text-sm text-slate-500">Global Airport</p>
-              <h1 className="text-2xl font-extrabold text-[#0C2D57]">
-                Reportes e indicadores
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800">
-            <ChartNoAxesCombined className="h-5 w-5" />
-            Centro de análisis
-          </div>
-        </div>
-      </header>
+     
 
       <main className="mx-auto max-w-7xl space-y-8 px-5 py-8 md:px-8 md:py-10">
         {/* Introducción */}
@@ -467,12 +382,12 @@ export default function Reportes() {
 
         <footer className="border-t border-sky-100 py-6 text-center text-sm text-slate-500 md:flex md:justify-between md:text-left">
           <p>© 2026 Global Airport. Todos los derechos reservados.</p>
-          <a href="/Home" className="mt-2 font-semibold text-sky-700 hover:text-blue-950 md:mt-0">
+          <Link to="/Home" className="mt-2 font-semibold text-sky-700 hover:text-blue-950 md:mt-0">
             Volver al inicio
-          </a>
+          </Link>
         </footer>
       </main>
     </div>
-  </div>
+  </>
   );
 }

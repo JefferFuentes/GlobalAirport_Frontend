@@ -106,6 +106,12 @@ export default function Reservaciones() {
   }
 
   return (
+    <>
+     <header className="border-b border-sky-100 bg-white px-5 py-5">
+        <h1 className="text-2xl font-bold text-[#0C2D57]">
+          Reservaciones
+        </h1>
+      </header>
     <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -266,5 +272,6 @@ export default function Reservaciones() {
         </section>
       </div>
     </div>
+    </>
   );
 }
