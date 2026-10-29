@@ -76,7 +76,7 @@ export default function Home() {
       <div className="flex min-h-screen">
         <aside className="hidden w-64 shrink-0 flex-col bg-[#0C2D57] text-white lg:flex">
           <a
-            href="/"
+            href="/Home"
             className="flex items-center gap-3 border-b border-white/10 px-6 py-7"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500">
