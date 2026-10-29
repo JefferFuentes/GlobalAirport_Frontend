@@ -5,10 +5,15 @@ import viteLogo from './assets/vite.svg';
 import './App.css';
 import Index from "../index";
 import UserManagement from './subsystems/userManagement';
+import AirportManagement from './subsystems/airportManagement';
+import AirportAdministrators from './subsystems/airportAdministrators';
 
-function App(){
-   return <UserManagement />;
+export default function App() {
+  const path = window.location.pathname;
 
+  if (path === "/asignacion-administradores") {
+    return <AirportAdministrators />;
+  }
+
+  return <AirportManagement />;
 }
-
-export default App
