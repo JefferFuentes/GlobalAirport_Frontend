@@ -708,3 +708,85 @@
           .ua-modal-body { padding: 18px; }
           .ua-modal-header { padding: 18px; }
         }
+/* Botones de historial del encabezado */
+.ua-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.ua-panel-heading > div:last-child {
+  flex-shrink: 0;
+}
+
+.ua-panel-heading .ua-action-btn {
+  width: auto;
+  min-width: 155px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 1px solid #DFEAF5;
+  border-radius: 10px;
+  background: #FFFFFF;
+  color: #0C2D57;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ua-panel-heading .ua-action-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ua-panel-heading .ua-action-btn:hover {
+  background: #E0F2FE;
+  border-color: #7DD3FC;
+}
+
+/* Espacio entre los dos botones */
+.ua-panel-heading .ua-action-btn + .ua-action-btn {
+  margin-left: 8px;
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width: 650px) {
+  .ua-panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ua-panel-heading > div:last-child {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ua-panel-heading .ua-action-btn {
+    flex: 1;
+    min-width: 145px;
+    margin-left: 0;
+  }
+}
+
+.ua-history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}

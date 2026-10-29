@@ -15,6 +15,9 @@ import {
   Plane,
 } from "lucide-react";
 import "./css/userManagement.css";
+import { History } from "lucide-react";
+import DeactivationHistory from "./deactivationHistory";
+import RoleChangeHistory from "./roleChangeHistory";
 
 const initialUsers = [
   {
@@ -83,6 +86,10 @@ export default function UserManagement() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [deactivationReason, setDeactivationReason] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [deactivationHistory, setDeactivationHistory] = useState([]);
+  const [showRoleHistory, setShowRoleHistory] = useState(false);
+  const [roleChangeHistory, setRoleChangeHistory] = useState([]);
 
   const activeUsers = users.filter((u) => u.status === "Activo").length;
   const inactiveUsers = users.length - activeUsers;
@@ -197,16 +204,36 @@ export default function UserManagement() {
       setUsers((current) => [newUser, ...current]);
       setMessage("Usuario registrado correctamente.");
     } else {
+      const previousUser = users.find((user) => user.id === editingId);
+
+      if (previousUser && previousUser.role !== form.role) {
+        const roleEvent = {
+          id: `${editingId}-${Date.now()}`,
+          userId: previousUser.id,
+          userName: form.name.trim(),
+          email,
+          previousRole: previousUser.role,
+          newRole: form.role,
+          dateTime: new Date().toLocaleString("es-CR", {
+            dateStyle: "short",
+            timeStyle: "medium",
+          }),
+          responsible: "Administrador General",
+        };
+
+        setRoleChangeHistory((current) => [roleEvent, ...current]);
+      }
+
       setUsers((current) =>
         current.map((user) =>
           user.id === editingId
             ? {
-                ...user,
-                name: form.name.trim(),
-                email,
-                phone: form.phone.trim(),
-                role: form.role,
-              }
+              ...user,
+              name: form.name.trim(),
+              email,
+              phone: form.phone.trim(),
+              role: form.role,
+            }
             : user
         )
       );
@@ -234,26 +261,71 @@ export default function UserManagement() {
     setMessage(`La cuenta de ${user.name} se reactivó.`);
   }
 
+
   function confirmDeactivation(event) {
     event.preventDefault();
 
+    const userToDeactivate = users.find(
+      (user) => user.id === editingId
+    );
+
+    if (!userToDeactivate) {
+      setModal(null);
+      return;
+    }
+
+    const eventRecord = {
+      id: `${editingId}-${Date.now()}`,
+      userId: userToDeactivate.id,
+      userName: userToDeactivate.name,
+      email: userToDeactivate.email,
+      dateTime: new Date().toLocaleString("es-CR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+      }),
+      responsible: "Administrador General",
+      reason: deactivationReason.trim(),
+    };
+
     setUsers((current) =>
       current.map((user) =>
-        user.id === editingId ? { ...user, status: "Inactivo" } : user
+        user.id === editingId
+          ? { ...user, status: "Inactivo" }
+          : user
       )
     );
 
+    setDeactivationHistory((current) => [
+      eventRecord,
+      ...current,
+    ]);
+
     setModal(null);
-    setMessage(
-      deactivationReason.trim()
-        ? `Usuario desactivado. Motivo: ${deactivationReason.trim()}`
-        : "Usuario desactivado correctamente."
+    setDeactivationReason("");
+    setMessage("Usuario desactivado y evento registrado en el historial.");
+  }
+
+  if (showHistory) {
+    return (
+      <DeactivationHistory
+        records={deactivationHistory}
+        onBack={() => setShowHistory(false)}
+      />
+    );
+  }
+
+  if (showRoleHistory) {
+    return (
+      <RoleChangeHistory
+        records={roleChangeHistory}
+        onBack={() => setShowRoleHistory(false)}
+      />
     );
   }
 
   return (
     <div className="users-page">
-      
+
 
       <header className="ua-topbar">
         <div>
@@ -324,12 +396,34 @@ export default function UserManagement() {
         </section>
 
         <section className="ua-panel">
+
           <div className="ua-panel-heading">
             <div>
               <h3>Directorio de usuarios</h3>
               <p>Consulta y administra las cuentas registradas.</p>
             </div>
+
+            <button
+              className="ua-action-btn"
+              onClick={() => setShowHistory(true)}
+              title="Consultar historial de desactivaciones"
+              aria-label="Consultar historial de desactivaciones"
+            >
+              <History size={18} />
+              <span>Historial de desactivaciones</span>
+            </button>
+
+            <button
+              className="ua-action-btn"
+              onClick={() => setShowRoleHistory(true)}
+              title="Consultar historial de cambios de roles"
+              aria-label="Consultar historial de cambios de roles"
+            >
+              <History size={18} />
+              <span>Historial de roles</span>
+            </button>
           </div>
+
 
           <div className="ua-toolbar">
             <label className="ua-search-box">
@@ -587,7 +681,7 @@ export default function UserManagement() {
                       />
                     </div>
 
-                   
+
                   </>
                 )}
               </div>
@@ -620,7 +714,7 @@ export default function UserManagement() {
             </header>
 
             <form className="ua-modal-body" onSubmit={confirmDeactivation}>
-            
+
 
               <div className="ua-form-field">
                 <label>Motivo de desactivación (opcional)</label>
