@@ -600,7 +600,6 @@ export default function PassengerManagement() {
                                 <th>Nacionalidad</th>
                                 <th>Contacto</th>
                                 <th>Registro</th>
-                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -638,22 +637,9 @@ export default function PassengerManagement() {
                                                 <Mail size={13} />
                                                 {passenger.email}
                                             </span>
-                                            <span>
-                                                <Phone size={13} />
-                                                {passenger.phone}
-                                            </span>
                                         </div>
                                     </td>
                                     <td>{formatDate(passenger.registrationDate)}</td>
-                                    <td>
-                                        <span
-                                            className={`pm-status ${passenger.status === "Activo" ? "active" : "inactive"
-                                                }`}
-                                        >
-                                            <span />
-                                            {passenger.status}
-                                        </span>
-                                    </td>
                                     <td>
                                         <div className="pm-actions">
                                             <button
@@ -686,21 +672,6 @@ export default function PassengerManagement() {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        className={`pm-toggle ${passenger.status === "Activo" ? "is-active" : "is-inactive"
-                                                            }`}
-                                                        title={
-                                                            passenger.status === "Activo"
-                                                                ? "Desactivar pasajero"
-                                                                : "Activar pasajero"
-                                                        }
-                                                        aria-label={`Cambiar estado de ${passenger.fullName}`}
-                                                        aria-pressed={passenger.status === "Activo"}
-                                                        onClick={() => toggleStatus(passenger)}
-                                                    >
-                                                        <span className="pm-toggle-ball" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
                                                         className="pm-icon-btn pm-delete-btn"
                                                         title="Eliminar pasajero"
                                                         aria-label={`Eliminar a ${passenger.fullName}`}
@@ -717,7 +688,7 @@ export default function PassengerManagement() {
 
                             {visiblePassengers.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="pm-empty">
+                                    <td colSpan={6} className="pm-empty">
                                         <Search size={25} />
                                         <strong>No se encontraron pasajeros</strong>
                                         <span>Probá cambiar los filtros o el texto de búsqueda.</span>
