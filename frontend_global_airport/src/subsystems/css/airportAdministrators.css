@@ -479,6 +479,20 @@
   transition: background 0.2s, color 0.2s;
 }
 
+.aa-row-actions { display: flex; align-items: center; gap: 7px; }
+.aa-edit-btn {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8e1ec;
+  border-radius: 8px;
+  background: #fff;
+  color: #0284c7;
+  cursor: pointer;
+}
+.aa-edit-btn:hover { background: #eff8ff; border-color: #7dd3fc; }
+
 .aa-delete-btn:hover {
   background: #dc2626;
   color: #fff;

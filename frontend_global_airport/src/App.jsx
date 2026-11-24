@@ -13,5 +13,5 @@ export default function App() {
   const path = window.location.pathname;
 
   
-  return <UserManagement/>;
+  return <PassengerManagement/>;
 }

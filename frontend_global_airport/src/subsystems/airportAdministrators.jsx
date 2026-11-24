@@ -1,473 +1,144 @@
-
-import { useState } from "react";
-import {
-  ArrowLeft,
-  Building2,
-  UserRound,
-  CalendarDays,
-  CheckCircle2,
-  ClipboardCheck,
-  Trash2,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Building2, CheckCircle2, ClipboardCheck, Pencil, Trash2, UserRound } from "lucide-react";
+import airportService from "../services/airportService";
+import airportAdministratorService from "../services/airportAdministratorService";
+import usuarioService from "../services/userService";
 import "./css/airportAdministrators.css";
 
-const airportsDemo = [
-  {
-    id: "AER-001",
-    name: "Aeropuerto Internacional Juan Santamaría",
-    iata: "SJO",
-    status: "Activo",
-  },
-  {
-    id: "AER-002",
-    name: "Aeropuerto Internacional Daniel Oduber Quirós",
-    iata: "LIR",
-    status: "Activo",
-  },
-  {
-    id: "AER-003",
-    name: "Aeropuerto Internacional Tobías Bolaños",
-    iata: "SYQ",
-    status: "Activo",
-  },
-  {
-    id: "AER-004",
-    name: "Aeropuerto de Limón",
-    iata: "LIO",
-    status: "Inactivo",
-  },
-];
-
-
-const usersDemo = [
-  {
-    id: "USR-001",
-    name: "María Fernanda Rodríguez",
-    email: "maria.rodriguez@globalairport.com",
-    phone: "8888-1200",
-    role: "Administrador de Aeropuerto",
-    status: "Activo",
-  },
-  {
-    id: "USR-002",
-    name: "Carlos Andrés Jiménez",
-    email: "carlos.jimenez@globalairport.com",
-    phone: "8555-2400",
-    role: "Empleado",
-    status: "Activo",
-  },
-  {
-    id: "USR-005",
-    name: "Andrea Mora Vargas",
-    email: "andrea.mora@globalairport.com",
-    phone: "8777-3600",
-    role: "Administrador de Aeropuerto",
-    status: "Activo",
-  },
-];
-
+const errorMessage = (error) => error.response?.data?.mensaje || error.response?.data?.message ||
+  (Array.isArray(error.response?.data?.errores) ? error.response.data.errores.join(". ") : null) ||
+  error.message || "No se pudo completar la operación.";
 
 export default function AirportAdministrators() {
+  const [airports, setAirports] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [editingId, setEditingId] = useState(null);
   const [airportId, setAirportId] = useState("");
   const [userId, setUserId] = useState("");
-  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const availableAirports = airportsDemo.filter(
-    (airport) => airport.status === "Activo"
-  );
+  async function loadData(mostrarCarga = true) {
+    if (mostrarCarga) {
+      setLoading(true);
+      setError("");
+    }
+    try {
+      const [airportData, userData, assignmentData] = await Promise.all([
+        airportService.listar(),
+        usuarioService.listar(),
+        airportAdministratorService.listar(),
+      ]);
+      setAirports(Array.isArray(airportData) ? airportData : []);
+      setUsers(Array.isArray(userData) ? userData : []);
+      setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
+    } catch (loadError) {
+      setError(errorMessage(loadError));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const availableAdmins = usersDemo.filter(
-    (user) =>
-      user.role === "Administrador de Aeropuerto" &&
-      user.status === "Activo"
-  );
+  useEffect(() => { void Promise.resolve().then(() => loadData(false)); }, []);
 
-  function handleAssignment(event) {
+  const availableAdmins = useMemo(() => users.filter((user) =>
+    user.estado === "ACTIVO" && user.rol?.codigo === "ADMIN_AEROPUERTO"
+  ), [users]);
+
+  const assignmentRows = useMemo(() => assignments.map((assignment) => ({
+    ...assignment,
+    airport: airports.find((item) => Number(item.id) === Number(assignment.aeropuertoId)),
+    user: users.find((item) => Number(item.id) === Number(assignment.usuarioId)),
+  })), [assignments, airports, users]);
+
+  async function handleAssignment(event) {
     event.preventDefault();
     setError("");
     setMessage("");
-
-    if (!airportId || !userId) {
-      setError("Seleccione un aeropuerto y un administrador.");
-      return;
+    setSaving(true);
+    try {
+      const data = { aeropuertoId: Number(airportId), usuarioId: Number(userId) };
+      if (editingId) {
+        await airportAdministratorService.actualizar(editingId, data);
+        setMessage("La asignación se actualizó correctamente.");
+      } else {
+        await airportAdministratorService.crear(data);
+        setMessage("La asignación se guardó correctamente.");
+      }
+      setEditingId(null);
+      setAirportId("");
+      setUserId("");
+      await loadData();
+    } catch (saveError) {
+      setError(errorMessage(saveError));
+    } finally {
+      setSaving(false);
     }
-
-    const airport = availableAirports.find(
-      (item) => item.id === airportId
-    );
-
-    const admin = availableAdmins.find(
-      (item) => item.id === userId
-    );
-
-    if (!airport || !admin) {
-      setError(
-        "Seleccione un aeropuerto y un usuario válidos."
-      );
-      return;
-    }
-
-    const currentAssignment = assignments.find(
-      (item) =>
-        item.airportId === airportId &&
-        item.status === "Activo"
-    );
-
-    if (currentAssignment?.userId === userId) {
-      setError(
-        "Este administrador ya está asignado a ese aeropuerto."
-      );
-      return;
-    }
-
-    const now = new Date();
-
-    const date = now.toLocaleDateString("es-CR");
-    const time = now.toLocaleTimeString("es-CR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-
-    const newAssignment = {
-      id: `ASG-${String(assignments.length + 1).padStart(3, "0")}`,
-      airportId: airport.id,
-      airportName: airport.name,
-      iata: airport.iata,
-      userId: admin.id,
-      adminName: admin.name,
-      email: admin.email,
-      phone: admin.phone,
-      date,
-      time,
-      status: "Activo",
-      responsible: "Administrador General",
-    };
-
-
-    setAssignments((current) => [
-      ...current.map((item) =>
-        item.airportId === airportId &&
-          item.status === "Activo"
-          ? { ...item, status: "Inactivo" }
-          : item
-      ),
-      newAssignment,
-    ]);
-
-    setMessage(
-      `Se asignó a ${admin.name} al aeropuerto ${airport.iata}.`
-    );
-
-    setAirportId("");
-    setUserId("");
   }
 
-  function deleteAssignment(assignment) {
-    const confirmed = window.confirm(
-      `¿Desea eliminar la asignación de ${assignment.adminName} al aeropuerto ${assignment.iata}?`
-    );
-
-    if (!confirmed) return;
-
-    setAssignments((current) =>
-      current.filter((item) => item.id !== assignment.id)
-    );
-
-    setMessage("La asignación se eliminó correctamente.");
+  function editAssignment(assignment) {
+    setEditingId(assignment.id);
+    setAirportId(String(assignment.aeropuertoId));
+    setUserId(String(assignment.usuarioId));
     setError("");
+    setMessage("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  const activeAssignments = assignments.filter((item) => {
-    const admin = usersDemo.find(
-      (user) => user.id === item.userId
-    );
 
-    return (
-      item.status === "Activo" &&
-      admin?.status === "Activo" &&
-      admin?.role === "Administrador de Aeropuerto"
-    );
-  });
+  async function deleteAssignment(assignment) {
+    const airport = airports.find((item) => Number(item.id) === Number(assignment.aeropuertoId));
+    const user = users.find((item) => Number(item.id) === Number(assignment.usuarioId));
+    if (!window.confirm(`¿Eliminar la asignación de ${user?.nombreCompleto || `usuario ${assignment.usuarioId}`} a ${airport?.codigoIata || `aeropuerto ${assignment.aeropuertoId}`}?`)) return;
+    setError("");
+    setMessage("");
+    try {
+      await airportAdministratorService.eliminar(assignment.id);
+      setMessage("La asignación se eliminó correctamente.");
+      await loadData();
+    } catch (deleteError) {
+      setError(errorMessage(deleteError));
+    }
+  }
 
   return (
     <div className="aa-page">
-      <header className="aa-topbar">
-        <div>
-          <div className="aa-breadcrumb">
-            Global Airport / Administración / Asignaciones
-          </div>
-          <h2>Asignación de administradores</h2>
-        </div>
-
-        <div className="aa-avatar">GA</div>
-      </header>
-
+      <header className="aa-topbar"><div><div className="aa-breadcrumb">Global Airport / Infraestructura / Asignaciones</div><h2>Asignación de administradores</h2></div><div className="aa-avatar">GA</div></header>
       <main className="aa-content">
-        <button
-          className="aa-back"
-          onClick={() => {
-            window.location.href = "/gestion-aeropuertos";
-          }}
-          type="button"
-        >
-          <ArrowLeft size={17} />
-          Volver
-        </button>
+        <div className="aa-heading"><div className="aa-heading-icon"><ClipboardCheck size={26} /></div><div><h1>Asignar administrador de aeropuerto</h1><p>Asigna usuarios con rol de administrador a los aeropuertos existentes.</p></div></div>
+        <div className="aa-admin-notice"><UserRound size={19} /><div><strong>Acceso requerido: Administrador General</strong><p>El backend limita la creación y eliminación de estas asignaciones a ese rol.</p></div></div>
 
-        <div className="aa-heading">
-          <div className="aa-heading-icon">
-            <ClipboardCheck size={26} />
-          </div>
-          <div>
-            <h1>Asignar administrador de aeropuerto</h1>
-            <p>
-              Seleccione una sede y un usuario autorizado
-              para gestionar sus operaciones.
-            </p>
-          </div>
-        </div>
-
-
-        <div className="aa-admin-notice">
-          <UserRound size={19} />
-          <div>
-            <strong>Consulta administrativa</strong>
-            <p>
-              Vista destinada al Administrador General para
-              supervisar las asignaciones de administradores
-              de aeropuerto.
-            </p>
-          </div>
-        </div>
-
+        {error && <div className="aa-alert aa-error" role="alert">{error}</div>}
+        {message && <div className="aa-alert aa-success"><CheckCircle2 size={18} />{message}</div>}
 
         <section className="aa-card">
-          <div className="aa-card-heading">
-            <div>
-              <h3>Datos de la asignación</h3>
-              <p>
-                La fecha y el responsable se registran automáticamente.
-              </p>
-            </div>
-            <span className="aa-required">* Obligatorio</span>
-          </div>
-
+          <div className="aa-card-heading"><div><h3>Datos de la asignación</h3><p>Selecciona un aeropuerto y un usuario activo con el rol requerido.</p></div><span className="aa-required">* Obligatorio</span></div>
           <form onSubmit={handleAssignment}>
-            {error && (
-              <div className="aa-alert aa-error">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="aa-alert aa-success">
-                <CheckCircle2 size={18} />
-                {message}
-              </div>
-            )}
-
             <div className="aa-form-grid">
-              <div className="aa-field">
-                <label htmlFor="airport">
-                  Aeropuerto <span>*</span>
-                </label>
-                <div className="aa-input-icon">
-                  <Building2 size={18} />
-                  <select
-                    id="airport"
-                    value={airportId}
-                    onChange={(event) =>
-                      setAirportId(event.target.value)
-                    }
-                    required
-                  >
-                    <option value="">
-                      Seleccione un aeropuerto
-                    </option>
-                    {availableAirports.map((airport) => (
-                      <option
-                        key={airport.id}
-                        value={airport.id}
-                      >
-                        {airport.name} ({airport.iata})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <small>
-                  Solo se muestran aeropuertos activos.
-                </small>
-              </div>
-
-              <div className="aa-field">
-                <label htmlFor="admin">
-                  Administrador de Aeropuerto <span>*</span>
-                </label>
-                <div className="aa-input-icon">
-                  <UserRound size={18} />
-                  <select
-                    id="admin"
-                    value={userId}
-                    onChange={(event) =>
-                      setUserId(event.target.value)
-                    }
-                    required
-                  >
-                    <option value="">
-                      Seleccione un administrador
-                    </option>
-                    {availableAdmins.map((admin) => (
-                      <option
-                        key={admin.id}
-                        value={admin.id}
-                      >
-                        {admin.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <small>
-                  Solo usuarios activos con el rol requerido.
-                </small>
-              </div>
-
-              <div className="aa-readonly">
-                <CalendarDays size={20} />
-                <div>
-                  <span>Fecha de asignación</span>
-                  <strong>Automática al confirmar</strong>
-                </div>
-              </div>
-
-              <div className="aa-readonly">
-                <CheckCircle2 size={20} />
-                <div>
-                  <span>Estado de asignación</span>
-                  <strong>Activo al confirmar</strong>
-                </div>
-              </div>
+              <div className="aa-field"><label htmlFor="airport">Aeropuerto <span>*</span></label><div className="aa-input-icon"><Building2 size={18} /><select id="airport" value={airportId} onChange={(event) => setAirportId(event.target.value)} required><option value="">Selecciona un aeropuerto</option>{airports.map((airport) => <option key={airport.id} value={airport.id}>{airport.codigoIata} · {airport.nombre}</option>)}</select></div></div>
+              <div className="aa-field"><label htmlFor="admin">Administrador <span>*</span></label><div className="aa-input-icon"><UserRound size={18} /><select id="admin" value={userId} onChange={(event) => setUserId(event.target.value)} required><option value="">Selecciona un administrador</option>{availableAdmins.map((user) => <option key={user.id} value={user.id}>{user.nombreCompleto} · {user.correo}</option>)}</select></div></div>
             </div>
-
-            <div className="aa-form-footer">
-              <button
-                className="aa-secondary"
-                type="button"
-                onClick={() => {
-                  setAirportId("");
-                  setUserId("");
-                  setError("");
-                  setMessage("");
-                }}
-              >
-                Limpiar
-              </button>
-              <button className="aa-primary" type="submit">
-                <CheckCircle2 size={18} />
-                Confirmar asignación
-              </button>
-            </div>
+          <div className="aa-form-footer">{editingId && <button className="aa-secondary" type="button" onClick={() => { setEditingId(null); setAirportId(""); setUserId(""); }}>Cancelar edición</button>}<button className="aa-primary" type="submit" disabled={saving || loading || !airports.length || !availableAdmins.length}><CheckCircle2 size={18} />{saving ? "Guardando..." : editingId ? "Guardar cambios" : "Confirmar asignación"}</button></div>
           </form>
         </section>
 
         <section className="aa-card">
-          <div className="aa-card-heading">
-            <div>
-              <h3>Administradores asignados</h3>
-              <p>
-                Listado de asignaciones actualmente activas.
-              </p>
-            </div>
-            <span className="aa-count">
-              {activeAssignments.length} activas
-            </span>
-          </div>
-
-          <div className="aa-table-wrap">
-            <table className="aa-table">
-
-              <thead>
-                <tr>
-                  <th>Aeropuerto</th>
-                  <th>Administrador</th>
-                  <th>Teléfono</th>
-                  <th>Correo electrónico</th>
-                  <th>Fecha de asignación</th>
-                  <th>Estado</th>
-                  <th>Responsable</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {activeAssignments.map((item) => (
-
-                  <tr key={item.id}>
-                    <td>
-                      <strong>{item.airportName}</strong>
-                      <small>{item.airportId} · {item.iata}</small>
-                    </td>
-
-                    <td>
-                      <strong>{item.adminName}</strong>
-                      <small>{item.userId}</small>
-                    </td>
-
-                    <td>{item.phone}</td>
-                    <td>{item.email}</td>
-                    <td>{item.date} · {item.time}</td>
-
-                    <td>
-                      <span className="aa-status">
-                        <span />
-                        {item.status}
-                      </span>
-                    </td>
-
-                    <td>{item.responsible}</td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="aa-delete-btn"
-                        title="Eliminar asignación"
-                        aria-label={`Eliminar asignación de ${item.adminName}`}
-                        onClick={() => deleteAssignment(item)}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </td>
-                  </tr>
-
-                ))}
-
-                {activeAssignments.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="aa-empty">
-                      <UserRound size={28} />
-                      <strong>No hay asignaciones todavía</strong>
-                      <span>
-                        Las asignaciones aparecerán aquí después
-                        de confirmar el formulario.
-                      </span>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <div className="aa-card-heading"><div><h3>Administradores asignados</h3><p>Asignaciones guardadas por el backend.</p></div><span className="aa-count">{assignments.length} registros</span></div>
+          <div className="aa-table-wrap"><table className="aa-table">
+            <thead><tr><th>Aeropuerto</th><th>Administrador</th><th>Correo electrónico</th><th>Acciones</th></tr></thead>
+            <tbody>
+              {loading ? <tr><td colSpan={4} className="aa-empty">Cargando asignaciones...</td></tr> : assignmentRows.map((assignment) => <tr key={assignment.id}>
+                <td><strong>{assignment.airport?.nombre || `Aeropuerto ${assignment.aeropuertoId}`}</strong><small>{assignment.airport?.codigoIata || "—"} · ID {assignment.aeropuertoId}</small></td>
+                <td><strong>{assignment.user?.nombreCompleto || `Usuario ${assignment.usuarioId}`}</strong><small>ID {assignment.usuarioId}</small></td>
+                <td>{assignment.user?.correo || "—"}</td>
+                <td><div className="aa-row-actions"><button type="button" className="aa-edit-btn" title="Editar asignación" aria-label="Editar asignación" onClick={() => editAssignment(assignment)}><Pencil size={16} /></button><button type="button" className="aa-delete-btn" title="Eliminar asignación" aria-label="Eliminar asignación" onClick={() => deleteAssignment(assignment)}><Trash2 size={17} /></button></div></td>
+              </tr>)}
+              {!loading && assignmentRows.length === 0 && <tr><td colSpan={4} className="aa-empty"><UserRound size={28} /><strong>No hay asignaciones registradas</strong><span>Las asignaciones creadas aparecerán aquí.</span></td></tr>}
+            </tbody>
+          </table></div>
         </section>
-
-        <div className="aa-note">
-          <CheckCircle2 size={18} />
-          <p>
-            <strong>Modo demostración:</strong> los datos son
-            temporales y se mantienen en el estado de React.
-            La persistencia y la integración con usuarios y
-            aeropuertos reales se realizarán cuando exista el backend.
-          </p>
-        </div>
       </main>
     </div>
   );

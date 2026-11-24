@@ -23,9 +23,13 @@ import rolService from "../services/rolService";
 
 const initialForm = {
   nombreCompleto: "",
-  identificacion: "",
+  tipoDocumento: "CEDULA",
+  numeroDocumento: "",
+  fechaNacimiento: "",
+  nacionalidad: "",
   correo: "",
   telefono: "",
+  direccion: "",
   rolId: "",
   password: "",
   confirmPassword: "",
@@ -57,6 +61,8 @@ function formatearFecha(fecha) {
   return fechaValida.toLocaleDateString("es-CR");
 }
 
+const fechaMaxima = new Date().toISOString().slice(0, 10);
+
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -82,10 +88,12 @@ export default function UserManagement() {
   // CARGAR USUARIOS Y ROLES DESDE EL BACKEND
   // ==========================================
 
-  async function cargarDatos() {
+  async function cargarDatos(mostrarCarga = true) {
     try {
-      setLoading(true);
-      setError("");
+      if (mostrarCarga) {
+        setLoading(true);
+        setError("");
+      }
 
       const [usuariosData, rolesData] = await Promise.all([
         usuarioService.listar(),
@@ -114,7 +122,7 @@ export default function UserManagement() {
   }
 
   useEffect(() => {
-    cargarDatos();
+    void Promise.resolve().then(() => cargarDatos(false));
   }, []);
 
   // ==========================================
@@ -151,7 +159,8 @@ export default function UserManagement() {
       const matchesSearch = [
         user.id,
         user.nombreCompleto,
-        user.identificacion || "",
+        user.tipoDocumento || "",
+        user.numeroDocumento || "",
         user.correo,
         user.telefono || "",
         roleName,
@@ -197,9 +206,13 @@ export default function UserManagement() {
 
     setForm({
       nombreCompleto: user.nombreCompleto || "",
-      identificacion: user.identificacion || "",
+      tipoDocumento: user.tipoDocumento || "CEDULA",
+      numeroDocumento: user.numeroDocumento || "",
+      fechaNacimiento: user.fechaNacimiento ? String(user.fechaNacimiento).slice(0, 10) : "",
+      nacionalidad: user.nacionalidad || "",
       correo: user.correo || "",
       telefono: user.telefono || "",
+      direccion: user.direccion || "",
       rolId:
         String(currentRoleCode || "").toUpperCase() === "PILOTO"
           ? ""
@@ -236,9 +249,11 @@ export default function UserManagement() {
 
     if (
       !form.nombreCompleto.trim() ||
-      !form.identificacion.trim() ||
+      !form.numeroDocumento.trim() ||
+      !form.fechaNacimiento ||
+      !form.nacionalidad.trim() ||
       !form.correo.trim() ||
-      !form.rolId
+      (!editingId && !form.rolId)
     ) {
       setError("Complete los campos obligatorios.");
       return;
@@ -289,11 +304,16 @@ export default function UserManagement() {
     // Datos que acepta el Backend.
     const datos = {
       nombreCompleto: form.nombreCompleto.trim(),
-      identificacion: form.identificacion.trim(),
+      tipoDocumento: form.tipoDocumento,
+      numeroDocumento: form.numeroDocumento.trim(),
+      fechaNacimiento: form.fechaNacimiento,
+      nacionalidad: form.nacionalidad.trim(),
       correo,
       telefono: form.telefono.trim() || null,
-      rolId: Number(form.rolId),
+      direccion: form.direccion.trim() || null,
     };
+
+    if (!editingId) datos.rolId = Number(form.rolId);
 
     // La contraseña solo se envía cuando corresponde.
     if (!editingId || form.password) {
@@ -719,7 +739,7 @@ export default function UserManagement() {
                 <tr>
                   <th>Usuario</th>
                   <th>ID usuario</th>
-                  <th>Identificación</th>
+                  <th>Documento</th>
                   <th>Rol asignado</th>
                   <th>Estado</th>
                   <th>Fecha de registro</th>
@@ -764,7 +784,7 @@ export default function UserManagement() {
 
                         <td>{user.id}</td>
 
-                        <td>{user.identificacion || "—"}</td>
+                        <td>{user.tipoDocumento || "—"} · {user.numeroDocumento || "—"}</td>
 
                         <td>
                           <span className="ua-role">
@@ -960,22 +980,32 @@ export default function UserManagement() {
                   />
                 </div>
 
-                {/* CORREO */}
+                {/* DOCUMENTO */}
 
                 <div className="ua-form-field">
                   <label>
-                    Identificación <span>*</span>
+                    Tipo de documento <span>*</span>
                   </label>
+                  <select value={form.tipoDocumento} onChange={(event) => updateForm("tipoDocumento", event.target.value)} required>
+                    <option value="CEDULA">Cédula</option>
+                    <option value="PASAPORTE">Pasaporte</option>
+                    <option value="RESIDENCIA">Documento de residencia</option>
+                  </select>
+                </div>
 
-                  <input
-                    value={form.identificacion}
-                    onChange={(event) =>
-                      updateForm("identificacion", event.target.value)
-                    }
-                    placeholder="Número de identificación"
-                    maxLength={30}
-                    required
-                  />
+                <div className="ua-form-field">
+                  <label>Número de documento <span>*</span></label>
+                  <input value={form.numeroDocumento} onChange={(event) => updateForm("numeroDocumento", event.target.value)} placeholder="Número de documento" required />
+                </div>
+
+                <div className="ua-form-field">
+                  <label>Fecha de nacimiento <span>*</span></label>
+                  <input type="date" value={form.fechaNacimiento} onChange={(event) => updateForm("fechaNacimiento", event.target.value)} max={fechaMaxima} required />
+                </div>
+
+                <div className="ua-form-field">
+                  <label>Nacionalidad <span>*</span></label>
+                  <input value={form.nacionalidad} onChange={(event) => updateForm("nacionalidad", event.target.value)} placeholder="Ej. Costa Rica" required />
                 </div>
 
                 {/* CORREO */}
@@ -1014,7 +1044,7 @@ export default function UserManagement() {
 
                 <div className="ua-form-field full">
                   <label>
-                    Rol asignado <span>*</span>
+                    Rol asignado {!editingId && <span>*</span>}
                   </label>
 
                   <select
@@ -1022,7 +1052,8 @@ export default function UserManagement() {
                     onChange={(event) =>
                       updateForm("rolId", event.target.value)
                     }
-                    required
+                    required={!editingId}
+                    disabled={Boolean(editingId)}
                   >
                     <option value="">
                       Seleccione un rol
@@ -1039,9 +1070,13 @@ export default function UserManagement() {
                   </select>
 
                   <span className="ua-help">
-                    El rol define las funciones disponibles
-                    para la cuenta.
+                    {editingId ? "El backend no permite cambiar el rol de una cuenta existente." : "El rol define las funciones disponibles para la cuenta."}
                   </span>
+                </div>
+
+                <div className="ua-form-field full">
+                  <label>Dirección</label>
+                  <input value={form.direccion} onChange={(event) => updateForm("direccion", event.target.value)} placeholder="Dirección de residencia" />
                 </div>
 
                 {/* CONTRASEÑA */}
@@ -1305,7 +1340,7 @@ export default function UserManagement() {
               ) : (
                 <div className="ua-profile-grid">
                   <div><span>Nombre completo</span><strong>{profileData.nombreCompleto || "—"}</strong></div>
-                  <div><span>Identificación</span><strong>{profileData.identificacion || "—"}</strong></div>
+                  <div><span>Documento</span><strong>{profileData.tipoDocumento || "—"} · {profileData.numeroDocumento || "—"}</strong></div>
                   <div><span>Correo electrónico</span><strong>{profileData.correo || "—"}</strong></div>
                   <div><span>Teléfono</span><strong>{profileData.telefono || "—"}</strong></div>
                   <div><span>Rol</span><strong>{profileRole}</strong></div>
