@@ -96,6 +96,18 @@
           font-weight: 750;
         }
 
+        .ua-avatar-button {
+          padding: 0;
+          border: 0;
+          cursor: pointer;
+          font: inherit;
+        }
+
+        .ua-avatar-button:focus-visible {
+          outline: 3px solid #93c5fd;
+          outline-offset: 3px;
+        }
+
         .ua-content {
           width: 100%;
           padding: 34px;
@@ -622,6 +634,30 @@
           font-size: 13px;
         }
 
+        .ua-profile-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 17px 22px;
+        }
+
+        .ua-profile-grid > div {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 0;
+        }
+
+        .ua-profile-grid span {
+          color: var(--ua-muted);
+          font-size: 11px;
+        }
+
+        .ua-profile-grid strong {
+          color: var(--ua-navy);
+          font-size: 13px;
+          overflow-wrap: anywhere;
+        }
+
         .ua-help {
           color: #8194AD;
           font-size: 10px;
@@ -707,6 +743,7 @@
           .ua-form-field.full { grid-column: auto; }
           .ua-modal-body { padding: 18px; }
           .ua-modal-header { padding: 18px; }
+          .ua-profile-grid { grid-template-columns: 1fr; }
         }
 /* Botones de historial del encabezado */
 .ua-panel-heading {
@@ -816,4 +853,18 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
+}
+
+
+.ua-toolbar .ua-filter select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 5px;
+}
+
+.ua-toolbar .ua-filter > svg {
+  flex-shrink: 0;
+  pointer-events: none;
 }
