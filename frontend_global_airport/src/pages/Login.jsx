@@ -2,34 +2,50 @@
 import { useState } from "react";
 import {
   Plane,
-  UserRound,
   Mail,
   LockKeyhole,
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export default function Registro() {
-  const [nombre, setNombre] = useState("");
+export default function Login() {
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmarPassword, setConfirmarPassword] = useState("");
-  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState("");
+  const [procesando, setProcesando] = useState(false);
 
-  function handleSubmit(e) {
+  const navigate = useNavigate();
+  const { iniciarSesion, cerrarSesion } = useAuth();
+
+  async function handleSubmit(e) {
     e.preventDefault();
+
+    if (procesando) return;
+
     setError("");
+    setProcesando(true);
 
-    if (password !== confirmarPassword) {
-      setError("Las contraseñas no coinciden.");
-      return;
+    try {
+      const datos = await iniciarSesion(correo, password);
+
+      if (datos.requiereSeleccionAeropuerto) {
+        navigate("/seleccionar-aeropuerto", { replace: true });
+      } else if (datos.accesoGlobal || datos.aeropuertoActivo) {
+        navigate("/Home", { replace: true });
+      } else {
+        cerrarSesion();
+        setError("No tenés un aeropuerto asignado.");
+      }
+
+    } catch (err) {
+      setError(err.message || "No se pudo iniciar sesión.");
+    } finally {
+      setProcesando(false);
     }
-
-    // Aquí conectarás el formulario con tu endpoint de registro.
-    console.log("Registrar usuario:", { nombre, correo, password });
   }
 
   return (
@@ -57,20 +73,15 @@ export default function Registro() {
 
         <div className="relative z-10 max-w-xl py-12">
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-sky-300">
-            Únete a Global Airport
+            Gestión aeroportuaria inteligente
           </p>
           <h1 className="mt-5 text-4xl font-extrabold leading-tight text-white xl:text-5xl">
-            Una gestión aeroportuaria más conectada y eficiente.
+            Todo el aeropuerto, conectado en un solo lugar.
           </h1>
           <p className="mt-6 text-lg leading-8 text-blue-100">
-            Accede a las herramientas que facilitan la administración de
-            vuelos, pasajeros, reservaciones y operaciones.
+            Administra vuelos, pasajeros, reservaciones y operaciones desde
+            una plataforma diseñada para simplificar tu trabajo.
           </p>
-
-          <div className="mt-8 flex items-center gap-3 text-sm text-blue-100">
-            <ShieldCheck className="h-6 w-6 shrink-0 text-sky-300" />
-            <span>Tu acceso dependerá de los permisos asignados por el sistema.</span>
-          </div>
         </div>
 
         <p className="relative z-10 text-sm text-blue-200">
@@ -83,7 +94,7 @@ export default function Registro() {
         <div className="w-full max-w-md">
           <a
             href="/"
-            className="mb-8 flex items-center justify-center gap-2 lg:hidden"
+            className="mb-10 flex items-center justify-center gap-2 lg:hidden"
           >
             <Plane className="h-8 w-8 text-sky-600" />
             <span className="text-xl font-extrabold text-[#0C2D57]">
@@ -91,42 +102,27 @@ export default function Registro() {
             </span>
           </a>
 
-          <div className="mb-7">
+          <div className="mb-8">
             <span className="inline-flex rounded-full bg-sky-100 px-3 py-1.5 text-sm font-bold text-sky-800">
-              Crear cuenta
+              Bienvenido de nuevo
             </span>
-            <h2 className="mt-4 text-3xl font-extrabold text-[#0C2D57] sm:text-4xl">
-              Regístrate
+            <h2 className="mt-5 text-3xl font-extrabold text-[#0C2D57] sm:text-4xl">
+              Iniciar sesión
             </h2>
             <p className="mt-3 leading-6 text-slate-500">
-              Completa tus datos para solicitar el registro en la plataforma.
+              Ingresa tus credenciales para acceder al sistema.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="nombre"
-                className="mb-2 block text-sm font-bold text-[#0C2D57]"
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
               >
-                Nombre completo
-              </label>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 transition focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-100">
-                <UserRound className="h-5 w-5 shrink-0 text-slate-400" />
-                <input
-                  id="nombre"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  minLength={2}
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Tu nombre completo"
-                  className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-                />
+                {error}
               </div>
-            </div>
-
+            )}
             <div>
               <label
                 htmlFor="correo"
@@ -144,7 +140,7 @@ export default function Registro() {
                   value={correo}
                   onChange={(e) => setCorreo(e.target.value)}
                   placeholder="nombre@ejemplo.com"
-                  className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent py-4 text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -161,13 +157,12 @@ export default function Registro() {
                 <input
                   id="password"
                   type={mostrarPassword ? "text" : "password"}
-                  autoComplete="new-password"
+                  autoComplete="current-password"
                   required
-                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                  placeholder="Ingresa tu contraseña"
+                  className="min-w-0 flex-1 bg-transparent py-4 text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
                 <button
                   type="button"
@@ -186,55 +181,37 @@ export default function Registro() {
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="confirmarPassword"
-                className="mb-2 block text-sm font-bold text-[#0C2D57]"
+            <div className="flex justify-end">
+              <a
+                href="/recuperar-password"
+                className="text-sm font-semibold text-sky-700 hover:text-blue-950"
               >
-                Confirmar contraseña
-              </label>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 transition focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-100">
-                <LockKeyhole className="h-5 w-5 shrink-0 text-slate-400" />
-                <input
-                  id="confirmarPassword"
-                  type={mostrarPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  minLength={8}
-                  value={confirmarPassword}
-                  onChange={(e) => setConfirmarPassword(e.target.value)}
-                  placeholder="Repite tu contraseña"
-                  className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-                />
-              </div>
+                ¿Olvidaste tu contraseña?
+              </a>
             </div>
-
-            {error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-              >
-                {error}
-              </p>
-            )}
 
             <button
               type="submit"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-600 px-5 py-4 font-bold leading-5 text-white shadow-md transition hover:bg-[#0C2D57] focus:outline-none focus:ring-4 focus:ring-sky-200"
+              disabled={procesando}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-600 px-5 py-4 font-bold leading-5 text-white shadow-md transition hover:bg-[#0C2D57] focus:outline-none focus:ring-4 focus:ring-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Crear cuenta
-              <ArrowRight className="h-5 w-5" />
+              {procesando ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Iniciando sesión...
+                </>
+              ) : (
+                <>
+                  Ingresar
+                  <ArrowRight className="h-5 w-5" />
+                </>
+              )}
             </button>
           </form>
 
-          <p className="mt-7 text-center text-sm text-slate-500">
-            ¿Ya tienes una cuenta?{" "}
-            <a
-              href="/login"
-              className="font-bold text-sky-700 hover:text-blue-950"
-            >
-              Inicia sesión
-            </a>
+
+          <p className="mt-10 text-center text-xs text-slate-400">
+            Acceso sujeto a los permisos asignados por el sistema.
           </p>
         </div>
       </section>

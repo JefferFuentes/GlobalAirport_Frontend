@@ -118,3 +118,14 @@ code {
     border-inline: none;
   }
 }
+
+/* Escala general de Global Airport */
+.app-content {
+  zoom: 1.0;
+}
+
+@media (max-width: 1024px) {
+  .app-content {
+    zoom: 1;
+  }
+}
