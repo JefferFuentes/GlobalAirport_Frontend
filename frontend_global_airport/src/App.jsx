@@ -6,16 +6,12 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import { useState } from 'react';
-import heroImg from './assets/hero.png';
-import reactLogo from './assets/react.svg';
-import viteLogo from './assets/vite.svg';
 import './App.css';
 import Index from "../index";
-import UserManagement from './subsystems/userManagement';
-import AirportManagement from './subsystems/airportManagement';
-import AirportAdministrators from './subsystems/airportAdministrators';
-import PassengerManagement from './subsystems/passegerManagement';
+import UserManagement from './pages/userManagement';
+import AirportManagement from './pages/airportManagement';
+import AirportAdministrators from './pages/airportAdministrators';
+import PassengerManagement from './pages/passegerManagement';
 
 
 import { useAuth } from "./context/AuthContext";
