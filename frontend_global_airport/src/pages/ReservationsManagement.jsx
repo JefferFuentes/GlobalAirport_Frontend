@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ticket, Plus, Search, TicketX, X, RefreshCw, ClipboardCheck, TicketCheck, ReceiptText } from "lucide-react";
+import { Ticket, Plus, Search, TicketX, X, RefreshCw, ClipboardCheck, TicketCheck, ReceiptText, } from "lucide-react";
 import { reservacionesService } from "../services/reservacionesService";
-import { api } from "../services/api";
 import { vuelosService } from "../services/vuelosService";
 import { useAuth } from "../context/AuthContext";
 import { tienePermiso } from "../config/permissions";
@@ -15,6 +14,9 @@ import PaseAbordajeModal from "../components/management/PaseAbordajeModal";
 import { imprimirDocumento } from "../utils/imprimirDocumento";
 import { comprobantesService } from "../services/comprobantesService";
 import ComprobanteReservacionModal from "../components/management/ComprobanteReservacionModal";
+import { pasajerosService } from "../services/pasajerosService";
+import SelectorPasajeros from "../components/management/SelectorPasajeros";
+import RegistrarPasajeroModal from "../components/management/RegistrarPasajeroModal";
 
 const formularioVacio = {
   pasajeroId: "",
@@ -46,38 +48,63 @@ const estilosEstado = {
 export default function Reservaciones() {
   const { rol, aeropuertoActivo } = useAuth();
 
-  const puedeConsultar = tienePermiso(
-    rol, "reservaciones", "consultar"
-  );
+  const accesoGlobal =
+    rol === "ADMIN_GENERAL";
 
-  const puedeCrear = tienePermiso(
-    rol, "reservaciones", "crear"
-  );
+  const aeropuertoActivoId =
+    aeropuertoActivo?.id ?? null;
 
-  const puedeCancelar = tienePermiso(
-    rol, "reservaciones", "cancelar"
-  );
+  const tieneContextoOperativo =
+    accesoGlobal ||
+    (
+      ["ADMIN_AEROPUERTO", "EMPLEADO"].includes(rol) &&
+      Number.isSafeInteger(aeropuertoActivoId) &&
+      aeropuertoActivoId > 0 &&
+      aeropuertoActivoId <= 2147483647
+    );
 
-  const puedeConsultarAsientos = tienePermiso(
-    rol, "reservaciones", "consultarAsientos"
-  );
+  // =====================================
+  // PERMISOS
+  // =====================================
 
-  const puedeConsultarComprobante = tienePermiso(
-    rol, "reservaciones", "consultarComprobante"
-  );
+  const puedeConsultar =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "consultar");
 
-  const puedeRegistrarCheckIn = tienePermiso(
-    rol, "reservaciones", "registrarCheckIn"
-  );
+  const puedeCrear =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "crear");
 
-  const puedeConsultarCheckIn = tienePermiso(
-    rol,
-    "reservaciones",
-    "consultarCheckIn"
-  );
+  const puedeCancelar =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "cancelar");
+
+  const puedeConsultarAsientos =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "consultarAsientos");
+
+  const puedeConsultarComprobante =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "consultarComprobante");
+
+  const puedeRegistrarCheckIn =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "registrarCheckIn");
+
+  const puedeConsultarCheckIn =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "consultarCheckIn");
+
+  const puedeGenerarPaseAbordaje =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "reservaciones", "generarPaseAbordaje");
 
 
   const [pasajeros, setPasajeros] = useState([]);
+  const [mostrarRegistroPasajero, setMostrarRegistroPasajero] = useState(false);
+  const [busquedaInicialPasajero, setBusquedaInicialPasajero] = useState("");
+  const [cargandoPasajeros, setCargandoPasajeros] = useState(true);
+  const [errorPasajeros, setErrorPasajeros] = useState("");
   const [vuelos, setVuelos] = useState([]);
   const [asientos, setAsientos] = useState([]);
   const [cargandoAsientos, setCargandoAsientos] = useState(false);
@@ -108,36 +135,50 @@ export default function Reservaciones() {
   const consultaPaseRef = useRef(0);
 
   useEffect(() => {
+
+    if (!puedeConsultar) {
+      setReservaciones([]);
+      setCargando(false);
+      return;
+    }
+
     cargarReservaciones();
-  }, []);
+
+  }, [puedeConsultar, aeropuertoActivoId]);
 
   useEffect(() => {
     async function cargarOpciones() {
+      if (!puedeCrear) {
+        setVuelos([]);
+        setPasajeros([]);
+        setCargandoPasajeros(false);
+        return;
+      }
       try {
-        const [respuestaPasajeros, respuestaVuelos] = await Promise.all([
-          api("/pasajeros"),
-          vuelosService.obtenerTodos(),
-        ]);
-
-        setPasajeros(
-          Array.isArray(respuestaPasajeros)
-            ? respuestaPasajeros
-            : respuestaPasajeros?.data ?? []
-        );
+        const respuestaVuelos =
+          await vuelosService.obtenerTodos();
 
         setVuelos(
           Array.isArray(respuestaVuelos)
             ? respuestaVuelos
             : respuestaVuelos?.data ?? []
         );
+
       } catch (err) {
-        console.error("Error al cargar opciones:", err);
+        console.error(
+          "Error al cargar vuelos:",
+          err
+        );
+
         setError(err.message);
       }
     }
 
     cargarOpciones();
-  }, []);
+    cargarPasajeros();
+
+  }, [puedeCrear, aeropuertoActivoId]);
+
   useEffect(() => {
     let vigente = true;
 
@@ -193,15 +234,52 @@ export default function Reservaciones() {
   }, [form.vueloId, puedeConsultarAsientos]);
 
   function nuevaReservacion() {
+
+    if (guardando || mostrarRegistroPasajero) {
+      return;
+    }
+
     if (!puedeCrear) {
-      setError("No tenés permiso para crear reservaciones.");
+      setError(
+        "No tenés permiso para crear reservaciones."
+      );
       return;
     }
 
     cancelar();
+
     setError("");
     setMensaje("");
     setMostrarForm(true);
+  }
+
+  async function cargarPasajeros() {
+    try {
+      setCargandoPasajeros(true);
+      setErrorPasajeros("");
+
+      const respuesta =
+        await pasajerosService.obtenerTodos();
+
+      if (!Array.isArray(respuesta)) {
+        throw new Error(
+          "La API no devolvió una lista de pasajeros válida."
+        );
+      }
+
+      setPasajeros(respuesta);
+
+    } catch (err) {
+      setErrorPasajeros(
+        err.message ||
+        "No fue posible consultar los pasajeros."
+      );
+
+      setPasajeros([]);
+
+    } finally {
+      setCargandoPasajeros(false);
+    }
   }
 
   async function cargarReservaciones() {
@@ -267,6 +345,18 @@ export default function Reservaciones() {
   }
   async function guardar(e) {
     e.preventDefault();
+
+    if (mostrarRegistroPasajero) {
+      return;
+    }
+
+    if (!pasajeroValido()) {
+      setError(
+        "Debés seleccionar un pasajero registrado."
+      );
+
+      return;
+    }
 
     if (guardando) return;
 
@@ -751,6 +841,101 @@ export default function Reservaciones() {
     setFiltroEstado("Todos");
   }
 
+  function seleccionarPasajero(id) {
+    setForm((prev) => ({
+      ...prev,
+      pasajeroId: id ? String(id) : "",
+    }));
+  }
+
+  function abrirRegistroPasajero(busqueda) {
+    if (
+      !mostrarForm ||
+      guardando ||
+      cargandoPasajeros ||
+      errorPasajeros ||
+      !puedeCrear ||
+      !tienePermiso(rol, "pasajeros", "crear")
+    ) {
+      return;
+    }
+
+    setBusquedaInicialPasajero(busqueda || "");
+    setMostrarRegistroPasajero(true);
+  }
+
+  function cerrarRegistroPasajero() {
+    setMostrarRegistroPasajero(false);
+    setBusquedaInicialPasajero("");
+  }
+
+  function manejarPasajeroRegistrado(nuevoPasajero) {
+    if (!nuevoPasajero?.id) return;
+
+    // Actualizar el listado de pasajeros.
+    setPasajeros((prev) => {
+      const lista = prev.filter(
+        (pasajero) =>
+          String(pasajero.id) !==
+          String(nuevoPasajero.id)
+      );
+
+      return [...lista, nuevoPasajero].sort(
+        (a, b) =>
+          a.nombreCompleto.localeCompare(
+            b.nombreCompleto,
+            "es"
+          )
+      );
+    });
+
+    // Seleccionar automáticamente el pasajero.
+    setForm((prev) => ({
+      ...prev,
+      pasajeroId: String(nuevoPasajero.id),
+    }));
+
+    // Cerrar únicamente el modal de pasajeros.
+    cerrarRegistroPasajero();
+  }
+
+  function pasajeroValido() {
+    if (
+      cargandoPasajeros ||
+      errorPasajeros ||
+      !form.pasajeroId
+    ) {
+      return false;
+    }
+
+    return pasajeros.some(
+      (pasajero) =>
+        String(pasajero.id) ===
+        String(form.pasajeroId)
+    );
+  }
+
+  if (!puedeConsultar) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+
+          <h2 className="text-xl font-bold text-[#0C2D57]">
+            Acceso restringido
+          </h2>
+
+          <p className="mt-3 text-sm text-slate-500">
+            No tenés permisos o un contexto operativo
+            válido para consultar las reservaciones.
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
+
   return (
     <>
       <header className="border-b border-sky-100 bg-white px-5 py-5">
@@ -765,7 +950,13 @@ export default function Reservaciones() {
             titulo="Gestión de reservaciones"
             descripcion="Administrá las reservaciones de los pasajeros."
             onActualizar={cargarReservaciones}
-            onNuevo={puedeCrear ? nuevaReservacion : undefined}
+            onNuevo={
+              puedeCrear &&
+                !guardando &&
+                !mostrarRegistroPasajero
+                ? nuevaReservacion
+                : undefined
+            }
             textoBoton="Nueva reservación"
           />
 
@@ -843,23 +1034,29 @@ export default function Reservaciones() {
 
               <div className="grid gap-4 sm:grid-cols-2">
 
-                <div>
-                  <label className={label}>Pasajero</label>
-                  <select
-                    required
-                    className={input}
-                    value={form.pasajeroId}
-                    onChange={(e) =>
-                      setForm({ ...form, pasajeroId: e.target.value })
-                    }
-                  >
-                    <option value="">Seleccionar pasajero</option>
-                    {pasajeros.map((pasajero) => (
-                      <option key={pasajero.id} value={pasajero.id}>
-                        {pasajero.nombreCompleto}
-                      </option>
-                    ))}
-                  </select>
+                <div className="sm:col-span-2 lg:col-span-3">
+
+                  <SelectorPasajeros
+                    pasajeros={pasajeros}
+                    pasajeroId={form.pasajeroId}
+                    onSeleccionar={seleccionarPasajero}
+                    onRegistrar={abrirRegistroPasajero}
+                    cargando={cargandoPasajeros}
+                    error={errorPasajeros}
+                    disabled={guardando || mostrarRegistroPasajero}
+                  />
+
+                  {errorPasajeros && (
+                    <button
+                      type="button"
+                      onClick={cargarPasajeros}
+                      disabled={cargandoPasajeros}
+                      className="mt-3 text-sm font-semibold text-sky-600 hover:text-sky-800"
+                    >
+                      Reintentar consulta de pasajeros
+                    </button>
+                  )}
+
                 </div>
 
                 <div>
@@ -917,6 +1114,7 @@ export default function Reservaciones() {
                     required
                     type="number"
                     min="0.01"
+                    max="9999999999.99"
                     step="0.01"
                     className={input}
                     placeholder="Ej. 250.00"
@@ -947,15 +1145,26 @@ export default function Reservaciones() {
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
-                <button type="button" onClick={cancelar} className="rounded-xl border px-5 py-2.5 font-semibold text-slate-600">
+                <button
+                  type="button"
+                  onClick={cancelar}
+                  disabled={guardando || mostrarRegistroPasajero}
+                  className="
+        rounded-xl border px-5 py-2.5
+        font-semibold text-slate-600
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+    "
+                >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={
                     guardando ||
+                    mostrarRegistroPasajero ||
                     cargandoAsientos ||
-                    !form.pasajeroId ||
+                    !pasajeroValido() ||
                     !form.vueloId ||
                     !form.asientoId ||
                     !form.metodoPago ||
@@ -1014,7 +1223,8 @@ export default function Reservaciones() {
              disabled:cursor-not-allowed
              disabled:opacity-50"
               >
-                <X size={16} />
+                <X size={16}
+                  disabled={guardando || mostrarRegistroPasajero} />
                 Limpiar filtros
               </button>
             </div>
@@ -1215,6 +1425,15 @@ export default function Reservaciones() {
           onImprimir={imprimirComprobante}
           cargando={cargandoComprobante}
           error={errorComprobante}
+        />
+      )}
+
+      {mostrarRegistroPasajero && (
+        <RegistrarPasajeroModal
+          busquedaInicial={busquedaInicialPasajero}
+          pasajeros={pasajeros}
+          onCerrar={cerrarRegistroPasajero}
+          onRegistrado={manejarPasajeroRegistrado}
         />
       )}
     </>

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import {
   Routes,
   Route,
@@ -6,18 +7,20 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import './App.css';
-import Index from "../index";
-import UserManagement from './pages/userManagement';
-import AirportManagement from './pages/airportManagement';
-import AirportAdministrators from './pages/airportAdministrators';
-import PassengerManagement from './pages/passegerManagement';
-
+import "./App.css";
 
 import { useAuth } from "./context/AuthContext";
-import ProtectedRoute from "./components/management/ProtectedRoute";
 
+import {
+  rutasModulos,
+  puedeAccederRuta,
+} from "./config/navigation";
+
+// Componentes compartidos
+import ProtectedRoute from "./components/management/ProtectedRoute";
 import Layout from "./components/management/Layout";
+
+// Páginas
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Reports from "./pages/Reports";
@@ -25,104 +28,225 @@ import Flights from "./pages/FlightsManagement";
 import Reservations from "./pages/ReservationsManagement";
 import Pilots from "./pages/pilotsManagement";
 import SelectAirport from "./pages/SelectAirport";
+import UserManagement from "./pages/userManagement";
+import AirportManagement from "./pages/airportManagement";
+import PassengerManagement from "./pages/passengerManagement";
+import EmployeeManagement from "./pages/employeeManagement";
+import AirportAdministrators from "./pages/airportAdministrators";
 
-// Rutas válidas del sistema
+// =====================================
+// RUTAS VÁLIDAS DEL SISTEMA
+// =====================================
+
 const rutasValidas = [
+  "/",
   "/login",
   "/seleccionar-aeropuerto",
-  "/Home",
-  "/reportes",
-  "/vuelos",
-  "/reservaciones",
-  "/pilotos",
+  ...rutasModulos,
 ];
 
-// Guardar la última ruta válida
+// =====================================
+// PANTALLA DE CARGA
+// =====================================
+
+function CargandoSesion() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <p className="text-sm font-medium text-slate-600">
+        Verificando sesión...
+      </p>
+    </div>
+  );
+}
+
+// =====================================
+// GUARDAR LA ÚLTIMA RUTA AUTORIZADA
+// =====================================
+
 function GuardarUltimaRuta() {
   const location = useLocation();
-  const { autenticado, cargando } = useAuth();
+
+  const {
+    autenticado,
+    cargando,
+    rol,
+    aeropuertoActivo,
+    requiereSeleccionAeropuerto,
+  } = useAuth();
 
   useEffect(() => {
-    if (cargando) return;
+    if (cargando || !autenticado || !rol) {
+      return;
+    }
 
-    if (
-      rutasValidas.includes(location.pathname) &&
-      (autenticado || location.pathname === "/login")
-    ) {
+    const tieneContextoOperativo =
+      rol === "ADMIN_GENERAL" ||
+      (
+        Boolean(aeropuertoActivo?.id) &&
+        !requiereSeleccionAeropuerto
+      );
+
+    if (!tieneContextoOperativo) {
+      return;
+    }
+
+    if (puedeAccederRuta(rol, location.pathname)) {
       sessionStorage.setItem(
         "ultimaRuta",
         location.pathname
       );
     }
-  }, [location.pathname, autenticado, cargando]);
+  }, [
+    location.pathname,
+    autenticado,
+    cargando,
+    rol,
+    aeropuertoActivo?.id,
+    requiereSeleccionAeropuerto,
+  ]);
 
   return null;
 }
 
-// Redirigir cuando la ruta no existe
+// =====================================
+// REDIRECCIÓN DE RUTAS INEXISTENTES
+// =====================================
+
 function RedireccionRutaInvalida() {
   const {
     autenticado,
     cargando,
-    requiereSeleccionAeropuerto,
-    accesoGlobal,
+    rol,
     aeropuertoActivo,
+    requiereSeleccionAeropuerto,
   } = useAuth();
 
-  if (cargando) return null;
+  if (cargando) {
+    return <CargandoSesion />;
+  }
 
   if (!autenticado) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiereSeleccionAeropuerto) {
+  if (
+    rol === "ADMIN_AEROPUERTO" &&
+    (
+      requiereSeleccionAeropuerto ||
+      !aeropuertoActivo?.id
+    )
+  ) {
     return (
-      <Navigate to="/seleccionar-aeropuerto" replace />
+      <Navigate
+        to="/seleccionar-aeropuerto"
+        replace
+      />
     );
   }
 
-  if (!accesoGlobal && !aeropuertoActivo) {
-    return <Navigate to="/login" replace />;
-  }
+  const ultimaRuta =
+    sessionStorage.getItem("ultimaRuta");
 
-  const ultimaRuta = sessionStorage.getItem("ultimaRuta");
-
-  const destino =
+  const rutaAutorizada =
+    ultimaRuta &&
     rutasValidas.includes(ultimaRuta) &&
-      ultimaRuta !== "/login" &&
-      ultimaRuta !== "/seleccionar-aeropuerto"
-      ? ultimaRuta
-      : "/Home";
+    puedeAccederRuta(rol, ultimaRuta);
 
-  return <Navigate to={destino} replace />;
+  return (
+    <Navigate
+      to={rutaAutorizada ? ultimaRuta : "/home"}
+      replace
+    />
+  );
 }
 
-// Evitar volver al Login si ya existe una sesión
+// =====================================
+// PROTECCIÓN DE RUTAS PÚBLICAS
+// =====================================
+
 function PublicRoute({ children }) {
   const {
     autenticado,
     cargando,
+    rol,
     requiereSeleccionAeropuerto,
-    accesoGlobal,
     aeropuertoActivo,
   } = useAuth();
 
-  if (cargando) return null;
+  if (cargando) {
+    return <CargandoSesion />;
+  }
 
-  if (autenticado) {
-    if (requiereSeleccionAeropuerto) {
-      return (
-        <Navigate to="/seleccionar-aeropuerto" replace />
-      );
-    }
+  if (!autenticado) {
+    return children;
+  }
 
-    if (accesoGlobal || aeropuertoActivo) {
-      return <Navigate to="/Home" replace />;
-    }
+  if (
+    rol === "ADMIN_AEROPUERTO" &&
+    (
+      requiereSeleccionAeropuerto ||
+      !aeropuertoActivo?.id
+    )
+  ) {
+    return (
+      <Navigate
+        to="/seleccionar-aeropuerto"
+        replace
+      />
+    );
+  }
+
+  return <Navigate to="/home" replace />;
+}
+
+// =====================================
+// PROTECCIÓN DE SELECCIÓN DE AEROPUERTO
+// =====================================
+
+function AirportSelectionRoute({ children }) {
+  const {
+    autenticado,
+    cargando,
+    rol,
+    aeropuertos,
+    aeropuertoActivo,
+    requiereSeleccionAeropuerto,
+  } = useAuth();
+
+  if (cargando) {
+    return <CargandoSesion />;
+  }
+
+  if (!autenticado) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (rol !== "ADMIN_AEROPUERTO") {
+    return <Navigate to="/home" replace />;
+  }
+
+  const cantidadAeropuertos =
+    aeropuertos?.length ?? 0;
+
+  // Permitir selección inicial
+  const necesitaSeleccionar =
+    requiereSeleccionAeropuerto ||
+    !aeropuertoActivo?.id;
+
+  // Permitir cambiar de aeropuerto
+  const puedeCambiar =
+    cantidadAeropuertos > 1;
+
+  if (!necesitaSeleccionar && !puedeCambiar) {
+    return <Navigate to="/home" replace />;
   }
 
   return children;
 }
+
+// =====================================
+// COMPONENTE PRINCIPAL
+// =====================================
 
 function App() {
   return (
@@ -131,13 +255,17 @@ function App() {
 
       <Routes>
 
-        {/* Ruta inicial */}
+        {/* RUTA INICIAL */}
+
         <Route
           path="/"
-          element={<Navigate to="/login" replace />}
+          element={
+            <Navigate to="/login" replace />
+          }
         />
 
-        {/* Autenticación */}
+        {/* AUTENTICACIÓN */}
+
         <Route
           path="/login"
           element={
@@ -147,45 +275,161 @@ function App() {
           }
         />
 
-        {/* Selección de aeropuerto */}
+        {/* SELECCIÓN DE AEROPUERTO */}
+
         <Route
           path="/seleccionar-aeropuerto"
-          element={<SelectAirport />}
+          element={
+            <AirportSelectionRoute>
+              <SelectAirport />
+            </AirportSelectionRoute>
+          }
         />
 
-        {/* Rutas protegidas */}
+        {/* RUTAS PROTEGIDAS */}
+
         <Route element={<ProtectedRoute />}>
+
           <Route element={<Layout />}>
 
-            {/* Inicio */}
-            <Route element={<ProtectedRoute modulo="inicio" />}>
-              <Route path="/Home" element={<Home />} />
+            {/* INICIO */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="inicio" />
+              }
+            >
+              <Route
+                path="/home"
+                element={<Home />}
+              />
             </Route>
 
-            {/* Vuelos */}
-            <Route element={<ProtectedRoute modulo="vuelos" />}>
-              <Route path="/vuelos" element={<Flights />} />
+            {/* USUARIOS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="usuarios" />
+              }
+            >
+              <Route
+                path="/usuarios"
+                element={<UserManagement />}
+              />
             </Route>
 
-            {/* Reservaciones */}
-            <Route element={<ProtectedRoute modulo="reservaciones" />}>
-              <Route path="/reservaciones" element={<Reservations />} />
+            {/* EMPLEADOS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="empleados" />
+              }
+            >
+              <Route
+                path="/empleados"
+                element={<EmployeeManagement />}
+              />
             </Route>
 
-            {/* Pilotos */}
-            <Route element={<ProtectedRoute modulo="pilotos" />}>
-              <Route path="/pilotos" element={<Pilots />} />
+            {/* AEROPUERTOS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="aeropuertos" />
+              }
+            >
+              <Route
+                path="/aeropuertos"
+                element={<AirportManagement />}
+              />
             </Route>
 
-            {/* Reportes e indicadores */}
-            <Route element={<ProtectedRoute modulo="reportes" />}>
-              <Route path="/reportes" element={<Reports />} />
+            {/* ASIGNACIÓN DE ADMINISTRADORES */}
+
+            <Route
+              element={
+                <ProtectedRoute
+                  modulo="asignacionesAdministradores"
+                />
+              }
+            >
+              <Route
+                path="/asignaciones-administradores"
+                element={<AirportAdministrators />}
+              />
+            </Route>
+
+            {/* PASAJEROS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="pasajeros" />
+              }
+            >
+              <Route
+                path="/pasajeros"
+                element={<PassengerManagement />}
+              />
+            </Route>
+
+            {/* VUELOS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="vuelos" />
+              }
+            >
+              <Route
+                path="/vuelos"
+                element={<Flights />}
+              />
+            </Route>
+
+            {/* RESERVACIONES */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="reservaciones" />
+              }
+            >
+              <Route
+                path="/reservaciones"
+                element={<Reservations />}
+              />
+            </Route>
+
+            {/* PILOTOS */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="pilotos" />
+              }
+            >
+              <Route
+                path="/pilotos"
+                element={<Pilots />}
+              />
+            </Route>
+
+            {/* REPORTES E INDICADORES */}
+
+            <Route
+              element={
+                <ProtectedRoute modulo="reportes" />
+              }
+            >
+              <Route
+                path="/reportes"
+                element={<Reports />}
+              />
             </Route>
 
           </Route>
+
         </Route>
 
-        {/* Rutas inexistentes */}
+        {/* RUTAS INEXISTENTES */}
+
         <Route
           path="*"
           element={<RedireccionRutaInvalida />}

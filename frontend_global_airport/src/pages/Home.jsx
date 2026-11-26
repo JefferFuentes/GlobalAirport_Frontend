@@ -1,234 +1,389 @@
+import { Link } from "react-router-dom";
 
 import {
   Plane,
-  LayoutDashboard,
-  Users,
   Building2,
-  Contact,
-  PlaneTakeoff,
-  Ticket,
+  ShieldCheck,
+  ArrowRight,
+  LayoutGrid,
   UserRound,
-  ChartNoAxesCombined,
-  Bell,
-  Search,
-  Menu,
-  ArrowUpRight,
-  Settings,
-  LogOut,
+  Info,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { tienePermiso } from "../config/permissions";
 
-const modules = [
-  {
-    title: "Usuarios",
-    description: "Administra las cuentas, los roles y los permisos.",
-    icon: Users,
-    color: "bg-sky-100 text-sky-700",
-    path: "/usuarios",
-    modulo: "usuarios"
-  },
-  {
-    title: "Aeropuertos",
-    description: "Consulta y administra la información aeroportuaria.",
-    icon: Building2,
-    color: "bg-blue-100 text-blue-800",
-    path: "/aeropuertos",
-    modulo: "aeropuertos"
-  },
-  {
-    title: "Pasajeros",
-    description: "Gestiona los datos y la información de los pasajeros.",
-    icon: Contact,
-    color: "bg-cyan-100 text-cyan-800",
-    path: "/pasajeros",
-    modulo: "pasajeros"
-  },
-  {
-    title: "Vuelos",
-    description: "Organiza los vuelos y consulta su programación.",
-    icon: PlaneTakeoff,
-    color: "bg-indigo-100 text-indigo-800",
-    path: "/vuelos",
-    modulo: "vuelos"
-  },
-  {
-    title: "Reservaciones",
-    description: "Administra las reservas y sus detalles.",
-    icon: Ticket,
-    color: "bg-sky-100 text-sky-700",
-    path: "/reservaciones",
-    modulo: "reservaciones"
-  },
-  {
-    title: "Pilotos",
-    description: "Consulta y administra la información de los pilotos.",
-    icon: UserRound,
-    color: "bg-blue-100 text-blue-800",
-    path: "/pilotos",
-    modulo: "pilotos"
-  },
-  {
-    title: "Reportes e indicadores",
-    description: "Visualiza estadísticas y analiza los resultados.",
-    icon: ChartNoAxesCombined,
-    color: "bg-cyan-100 text-cyan-800",
-    path: "/reportes",
-    modulo: "reportes"
-  },
-];
+import { useAuth } from "../context/AuthContext";
+
+import {
+  obtenerInicioAgrupado,
+  obtenerModulosInicio,
+} from "../config/navigation";
+
+// =====================================
+// ETIQUETAS DE ROLES
+// =====================================
+
+const etiquetasRoles = {
+  ADMIN_GENERAL: "Administrador general",
+  ADMIN_AEROPUERTO: "Administrador de aeropuerto",
+  EMPLEADO: "Empleado",
+};
+
+// =====================================
+// COMPONENTE TARJETA DE MÓDULO
+// =====================================
+
+function TarjetaModulo({ modulo }) {
+  const Icono = modulo.icono;
+
+  return (
+    <Link
+      to={modulo.ruta}
+      className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-md"
+    >
+
+      {/* ICONO */}
+
+      <div
+        className={`
+          mb-5 flex h-14 w-14 items-center
+          justify-center rounded-xl
+          ${modulo.color}
+        `}
+      >
+
+        <Icono size={28} />
+
+      </div>
+
+      {/* INFORMACIÓN DEL MÓDULO */}
+
+      <h3 className="mb-2 text-lg font-semibold text-[#0C2D57]">
+
+        {modulo.titulo}
+
+      </h3>
+
+      <p className="mb-6 flex-1 text-sm leading-relaxed text-slate-500">
+
+        {modulo.descripcion}
+
+      </p>
+
+      {/* ENLACE */}
+
+      <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+
+        <span className="text-sm font-semibold text-sky-600">
+
+          Acceder al módulo
+
+        </span>
+
+        <ArrowRight
+          size={19}
+          className="text-sky-600 transition-transform group-hover:translate-x-1"
+        />
+
+      </div>
+
+    </Link>
+  );
+}
+
+// =====================================
+// COMPONENTE PRINCIPAL
+// =====================================
 
 export default function Home() {
-  const { rol } = useAuth();
+  const {
+    usuario,
+    rol,
+    aeropuertoActivo,
+  } = useAuth();
 
-  const modulosPermitidos = modules.filter((module) =>
-    tienePermiso(rol, module.modulo, "consultar")
-  );
+  const accesoGlobal = rol === "ADMIN_GENERAL";
+
+  const categorias = obtenerInicioAgrupado(rol);
+
+  const modulos = obtenerModulosInicio(rol);
+
+  const primerNombre =
+    usuario?.nombreCompleto
+      ?.trim()
+      .split(/\s+/)[0] || "Usuario";
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-700">
+    <div className="min-h-full bg-slate-50 p-4 sm:p-6 lg:p-8">
 
+      <div className="mx-auto max-w-[1600px] space-y-8">
 
-      {/* Área principal */}
-      <main className="min-w-0 flex-1">
-        {/* Encabezado */}
-        <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-sky-100 bg-white/95 px-5 py-4 backdrop-blur md:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700 lg:hidden">
-              <Menu className="h-5 w-5" />
+        {/* BIENVENIDA */}
+
+        <section className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#0C2D57] via-[#0369A1] to-[#0284C7] p-6 text-white shadow-lg shadow-sky-900/10 sm:p-9">
+
+          {/* ELEMENTOS DECORATIVOS */}
+
+          <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl" />
+
+          <Plane
+            size={220}
+            strokeWidth={0.7}
+            className="pointer-events-none absolute -bottom-12 -right-8 -rotate-20 text-white/15"
+          />
+
+          <div className="relative z-10 max-w-3xl">
+
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1.5 text-xs font-medium text-sky-100">
+
+              <Plane size={15} />
+
+              Sistema de gestión aeroportuaria
+
+            </div>
+
+            {/* SALUDO */}
+
+            <h1 className="text-4xl font-extrabold tracking-tight text-white! drop-shadow-md sm:text-5xl">
+              ¡Bienvenido,{" "}
+              <span className="text-[#BAE6FD]!">
+                {primerNombre}!
+              </span>
+            </h1>
+
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-sky-100 sm:text-base">
+
+              Gestioná las operaciones aeroportuarias
+              desde una plataforma centralizada,
+              segura y organizada.
+
+            </p>
+
+            {/* ROL DEL USUARIO */}
+
+            <div className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/15 px-4 py-2 text-sm font-medium text-white">
+
+              <ShieldCheck size={17} />
+
+              {etiquetasRoles[rol] ?? rol}
+
+            </div>
+
+          </div>
+
+        </section>
+        {/* INFORMACIÓN GENERAL */}
+
+        <section className="grid gap-4 md:grid-cols-3">
+
+          {/* ROL */}
+
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+
+              <UserRound size={24} />
+
+            </div>
+
+            <div className="min-w-0">
+
+              <p className="text-xs font-medium text-slate-500">
+
+                Rol de usuario
+
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-[#0C2D57]">
+
+                {etiquetasRoles[rol] ?? rol}
+
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* ALCANCE OPERATIVO */}
+
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+
+              {accesoGlobal ? (
+
+                <ShieldCheck size={24} />
+
+              ) : (
+
+                <Building2 size={24} />
+
+              )}
+
+            </div>
+
+            <div className="min-w-0">
+
+              <p className="text-xs font-medium text-slate-500">
+
+                {accesoGlobal
+                  ? "Alcance administrativo"
+                  : "Aeropuerto activo"}
+
+              </p>
+
+              <p className="mt-1 text-sm font-semibold text-[#0C2D57]">
+
+                {accesoGlobal
+                  ? "Acceso global"
+                  : aeropuertoActivo?.nombre ??
+                  "Sin aeropuerto activo"}
+
+              </p>
+
+              {!accesoGlobal &&
+                aeropuertoActivo?.codigoIata && (
+
+                  <p className="mt-1 text-xs text-sky-600">
+
+                    {aeropuertoActivo.codigoIata}
+
+                  </p>
+
+                )}
+
+            </div>
+
+          </div>
+
+          {/* MÓDULOS DISPONIBLES */}
+
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+
+              <LayoutGrid size={24} />
+
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">Global Airport</p>
-              <h1 className="text-xl font-extrabold text-[#0C2D57] md:text-2xl">
-                Panel principal
-              </h1>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <label className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 sm:flex">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                type="search"
-                placeholder="Buscar módulo..."
-                className="w-36 bg-transparent text-sm outline-none md:w-48"
-                aria-label="Buscar módulo"
-              />
-            </label>
+              <p className="text-xs font-medium text-slate-500">
 
-            <button
-              type="button"
-              aria-label="Notificaciones"
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-[#0C2D57] transition hover:bg-sky-50"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-sky-500" />
-            </button>
+                Módulos disponibles
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0C2D57] font-bold text-white">
-              GA
-            </div>
-          </div>
-        </header>
-
-        <div className="mx-auto max-w-7xl space-y-8 px-5 py-8 md:px-8 md:py-10">
-          {/* Bienvenida */}
-          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0C2D57] via-blue-800 to-sky-600 p-7 text-white shadow-lg md:p-10">
-            <div className="absolute -right-12 -top-16 h-64 w-64 rounded-full border-[35px] border-white/10" />
-            <div className="absolute -bottom-24 right-40 h-52 w-52 rounded-full bg-sky-300/10" />
-
-            <div className="relative max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-sky-100">
-                <Plane className="h-4 w-4" />
-                Sistema de gestión aeroportuaria
-              </span>
-
-              <h2 className="mt-5 text-3xl font-extrabold leading-tight md:text-4xl">
-                Bienvenido a Global Airport
-              </h2>
-
-              <p className="mt-3 max-w-xl leading-7 text-blue-100">
-                Gestiona los procesos del aeropuerto desde un solo lugar.
-                Selecciona un módulo para comenzar a trabajar.
               </p>
 
-              <a
-                href="#modulos"
-                className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-5 py-3 font-bold text-[#0C2D57] transition hover:bg-sky-100"
-              >
-                Explorar módulos
-                <ArrowUpRight className="h-5 w-5" />
-              </a>
+              <p className="mt-1 text-2xl font-bold text-[#0C2D57]">
+
+                {modulos.length}
+
+              </p>
+
             </div>
-          </section>
 
-          {/* Título de módulos */}
-          <section id="modulos">
-            <div className="mb-6 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-sky-600">
-                  Administración
-                </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-[#0C2D57] md:text-3xl">
-                  Módulos del sistema
-                </h2>
-                <p className="mt-2 text-slate-500">
-                  Accede a las herramientas de gestión aeroportuaria.
-                </p>
-              </div>
+          </div>
 
-              <span className="w-fit rounded-full bg-sky-100 px-3 py-1.5 text-sm font-semibold text-sky-800">
-                {modules.length} módulos
+        </section>
+
+        {/* ENCABEZADO DE MÓDULOS */}
+
+        <section>
+
+          <h2 className="text-2xl font-bold text-[#0C2D57]">
+
+            Módulos del sistema
+
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+
+            Seleccioná el módulo que necesitás utilizar.
+
+          </p>
+
+        </section>
+
+        {/* MÓDULOS AGRUPADOS */}
+
+        {categorias.map((categoria) => (
+
+          <section
+            key={categoria.id}
+            className="space-y-4"
+          >
+
+            <div className="flex items-center gap-3">
+
+              <h2 className="text-lg font-semibold text-[#0C2D57]">
+
+                {categoria.titulo}
+
+              </h2>
+
+              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600">
+
+                {categoria.modulos.length}
+
               </span>
+
+              <div className="h-px flex-1 bg-slate-200" />
+
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {modulosPermitidos.map((module) => {
-                const Icon = module.icon;
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 
-                return (
-                  <Link
-                    key={module.title}
-                    to={module.path}
-                    className="group flex min-h-52 flex-col rounded-2xl border border-sky-100 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-lg"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-2xl ${module.color}`}
-                      >
-                        <Icon className="h-7 w-7" />
-                      </div>
+              {categoria.modulos.map((modulo) => (
 
-                      <ArrowUpRight className="h-5 w-5 text-slate-300 transition group-hover:text-sky-600" />
-                    </div>
+                <TarjetaModulo
+                  key={modulo.id}
+                  modulo={modulo}
+                />
 
-                    <h3 className="mt-5 text-lg font-bold text-[#0C2D57]">
-                      {module.title}
-                    </h3>
+              ))}
 
-                    <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">
-                      {module.description}
-                    </p>
-
-                    <span className="mt-4 text-sm font-bold text-sky-700 group-hover:text-blue-900">
-                      Abrir módulo →
-                    </span>
-                  </Link>
-                );
-              })}
             </div>
+
           </section>
 
-          {/* Pie */}
-          <footer className="border-t border-sky-100 py-6 text-center text-sm text-slate-500 md:flex md:justify-between md:text-left">
-            <p>© 2026 Global Airport. Todos los derechos reservados.</p>
-            <p className="mt-2 text-[#0C2D57] md:mt-0">
-              Gestión aeroportuaria inteligente
+        ))}
+
+        {/* SIN MÓDULOS AUTORIZADOS */}
+
+        {modulos.length === 0 && (
+
+          <section className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-10 text-center">
+
+            <Info
+              size={36}
+              className="text-slate-300"
+            />
+
+            <h3 className="font-semibold text-[#0C2D57]">
+
+              No hay módulos disponibles
+
+            </h3>
+
+            <p className="max-w-md text-sm text-slate-500">
+
+              Tu cuenta no tiene módulos autorizados.
+              Contactá al administrador del sistema.
+
             </p>
-          </footer>
-        </div>
-      </main>
+
+          </section>
+
+        )}
+
+        {/* PIE DE PÁGINA */}
+
+        <footer className="border-t border-slate-200 py-5 text-center text-xs text-slate-400">
+
+          Global Airport · Sistema de gestión aeroportuaria
+
+        </footer>
+
+      </div>
+
     </div>
   );
 }

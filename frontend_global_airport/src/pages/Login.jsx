@@ -35,7 +35,7 @@ export default function Login() {
       if (datos.requiereSeleccionAeropuerto) {
         navigate("/seleccionar-aeropuerto", { replace: true });
       } else if (datos.accesoGlobal || datos.aeropuertoActivo) {
-        navigate("/Home", { replace: true });
+        navigate("/home", { replace: true });
       } else {
         cerrarSesion();
         setError("No tenés un aeropuerto asignado.");
@@ -75,8 +75,11 @@ export default function Login() {
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-sky-300">
             Gestión aeroportuaria inteligente
           </p>
-          <h1 className="mt-5 text-4xl font-extrabold leading-tight text-white xl:text-5xl">
-            Todo el aeropuerto, conectado en un solo lugar.
+          <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight text-white! drop-shadow-lg xl:text-5xl">
+            Todo el aeropuerto,{" "}
+            <span className="text-sky-300!">
+              conectado en un solo lugar.
+            </span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-blue-100">
             Administra vuelos, pasajeros, reservaciones y operaciones desde
@@ -179,15 +182,6 @@ export default function Login() {
                   )}
                 </button>
               </div>
-            </div>
-
-            <div className="flex justify-end">
-              <a
-                href="/recuperar-password"
-                className="text-sm font-semibold text-sky-700 hover:text-blue-950"
-              >
-                ¿Olvidaste tu contraseña?
-              </a>
             </div>
 
             <button

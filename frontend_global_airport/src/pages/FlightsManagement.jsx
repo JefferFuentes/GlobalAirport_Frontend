@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plane, Plus, Search, Pencil, X, RefreshCw, UserRoundPlus, } from "lucide-react";
-import { api } from "../services/api";
 import { vuelosService } from "../services/vuelosService";
 import { aeropuertosService } from "../services/aeropuertosService";
 import { aeronavesService } from "../services/aeronavesService";
 import { pilotosService } from "../services/pilotosService";
-import { asignacionesService } from "../services/asignacionesService";
 import { useAuth } from "../context/AuthContext";
 import { tienePermiso } from "../config/permissions";
 
@@ -76,6 +74,7 @@ function fechaParaMostrar(fecha) {
 }
 
 export default function Vuelos() {
+
   const [vuelos, setVuelos] = useState([]);
   const [aeropuertos, setAeropuertos] = useState([]);
   const [aeronaves, setAeronaves] = useState([]);
@@ -107,8 +106,23 @@ export default function Vuelos() {
 
 
   async function cargarDatos() {
-    console.log("INICIANDO CARGA DE DATOS...");
+
+    if (!puedeConsultar) {
+
+      setVuelos([]);
+      setAeropuertos([]);
+      setAeronaves([]);
+      setPilotos([]);
+      setAsignaciones([]);
+
+      setCargando(false);
+      setError("No tenés permisos para consultar vuelos.");
+
+      return;
+    }
+
     try {
+
       setCargando(true);
       setError("");
 
@@ -117,29 +131,46 @@ export default function Vuelos() {
         respuestaAeropuertos,
         respuestaAeronaves,
         respuestaPilotos,
-        respuestaAsignaciones,
       ] = await Promise.all([
         vuelosService.obtenerTodos(),
-        aeropuertosService.obtenerTodos(),
+        aeropuertosService.obtenerCatalogo(),
         aeronavesService.obtenerTodos(),
         pilotosService.obtenerTodos(),
-        asignacionesService.obtenerTodos(),
       ]);
 
-      console.log("Vuelos:", respuestaVuelos);
-      console.log("Aeropuertos:", respuestaAeropuertos);
-      console.log("Aeronaves:", respuestaAeronaves);
-      console.log("Pilotos:", respuestaPilotos);
-      console.log("Asignaciones:", respuestaAsignaciones);
-      setVuelos(obtenerLista(respuestaVuelos));
-      setAeropuertos(obtenerLista(respuestaAeropuertos));
-      setAeronaves(obtenerLista(respuestaAeronaves));
-      setPilotos(obtenerLista(respuestaPilotos));
-      setAsignaciones(obtenerLista(respuestaAsignaciones));
+      const listaVuelos = obtenerLista(respuestaVuelos);
+
+      setVuelos(listaVuelos);
+
+      setAeropuertos(
+        obtenerLista(respuestaAeropuertos)
+      );
+
+      setAeronaves(
+        obtenerLista(respuestaAeronaves)
+      );
+
+      setPilotos(
+        obtenerLista(respuestaPilotos)
+      );
+
+      setAsignaciones(
+        listaVuelos.flatMap((vuelo) =>
+          Array.isArray(vuelo.pilotos)
+            ? vuelo.pilotos.map((asignacion) => ({
+              ...asignacion,
+              vueloId: vuelo.id,
+            }))
+            : []
+        )
+      );
 
     } catch (err) {
+
       setError(err.message);
+
     } finally {
+
       setCargando(false);
     }
   }
@@ -252,6 +283,14 @@ export default function Vuelos() {
     }
 
     cancelar();
+
+    setForm({
+      ...formularioVacio,
+      aeropuertoOrigenId: accesoGlobal
+        ? ""
+        : String(aeropuertoActivoId),
+    });
+
     setError("");
     setMensaje("");
     setMostrarForm(true);
@@ -288,6 +327,10 @@ export default function Vuelos() {
 
   async function guardar(e) {
     e.preventDefault();
+
+    if (guardando) {
+      return;
+    }
 
     if (editando === null && !puedeCrear) {
       setError("No tenés permiso para registrar vuelos.");
@@ -389,6 +432,9 @@ export default function Vuelos() {
 
   async function asignarPiloto(e) {
     e.preventDefault();
+    if (guardando) {
+      return;
+    }
 
     if (!puedeAsignarPiloto) {
       setError("No tenés permiso para asignar pilotos.");
@@ -403,7 +449,7 @@ export default function Vuelos() {
       setGuardando(true);
       setError("");
 
-      await asignacionesService.registrar(
+      await vuelosService.asignarPiloto(
         vueloSeleccionado.id,
         Number(pilotoSeleccionado)
       );
@@ -421,20 +467,79 @@ export default function Vuelos() {
       setGuardando(false);
     }
   }
+  const {
+    rol,
+    aeropuertoActivo,
+  } = useAuth();
 
-  const { rol } = useAuth();
+  const accesoGlobal =
+    rol === "ADMIN_GENERAL";
 
-  const puedeCrear = tienePermiso(rol, "vuelos", "crear");
+  const aeropuertoActivoId =
+    aeropuertoActivo?.id ?? null;
 
-  const puedeEditar = tienePermiso(rol, "vuelos", "editar");
+  const tieneContextoOperativo =
+    accesoGlobal ||
+    (
+      ["ADMIN_AEROPUERTO", "EMPLEADO"].includes(rol) &&
+      Number.isSafeInteger(aeropuertoActivoId) &&
+      aeropuertoActivoId > 0 &&
+      aeropuertoActivoId <= 2147483647
+    );
 
-  const puedeCambiarEstado = tienePermiso(
-    rol, "vuelos", "cambiarEstado"
-  );
+  // =====================================
+  // PERMISOS
+  // =====================================
 
-  const puedeAsignarPiloto = tienePermiso(
-    rol, "vuelos", "asignarPiloto"
-  );
+  const puedeConsultar =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "consultar");
+
+  const puedeCrear =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "crear");
+
+  const puedeEditar =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "editar");
+
+  const puedeCambiarEstado =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "cambiarEstado");
+
+  const puedeAsignarPiloto =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "asignarPiloto");
+
+  const puedeQuitarPiloto =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "quitarPiloto");
+
+  const puedeConsultarAsientos =
+    tieneContextoOperativo &&
+    tienePermiso(rol, "vuelos", "consultarAsientos");
+
+
+  if (!puedeConsultar) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+
+          <h2 className="text-xl font-bold text-[#0C2D57]">
+            Acceso restringido
+          </h2>
+
+          <p className="mt-3 text-sm text-slate-500">
+            No tenés permisos o un contexto operativo
+            válido para consultar los vuelos.
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
 
   return (
     <>
@@ -590,12 +695,15 @@ export default function Vuelos() {
 
                     <select
                       required
-                      className={input}
+                      disabled={!accesoGlobal}
+                      className={`${input} disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500`}
                       value={form.aeropuertoOrigenId}
                       onChange={(e) =>
                         setForm({
                           ...form,
                           aeropuertoOrigenId: e.target.value,
+                          aeropuertoDestinoId: "",
+                          aeronaveId: "",
                         })
                       }
                     >
@@ -603,12 +711,24 @@ export default function Vuelos() {
                         Seleccionar origen
                       </option>
 
-                      {aeropuertos.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nombre} ({a.codigoIata})
-                        </option>
-                      ))}
+                      {aeropuertos
+                        .filter(
+                          (a) =>
+                            accesoGlobal ||
+                            a.id === aeropuertoActivoId
+                        )
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre} ({a.codigoIata})
+                          </option>
+                        ))}
                     </select>
+
+                    {!accesoGlobal && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Corresponde a tu aeropuerto activo.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -631,11 +751,16 @@ export default function Vuelos() {
                         Seleccionar destino
                       </option>
 
-                      {aeropuertos.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nombre} ({a.codigoIata})
-                        </option>
-                      ))}
+                      {aeropuertos
+                        .filter(
+                          (a) =>
+                            a.id !== Number(form.aeropuertoOrigenId)
+                        )
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre} ({a.codigoIata})
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -646,7 +771,8 @@ export default function Vuelos() {
 
                     <select
                       required
-                      className={input}
+                      disabled={!form.aeropuertoOrigenId}
+                      className={`${input} disabled:cursor-not-allowed disabled:bg-slate-100`}
                       value={form.aeronaveId}
                       onChange={(e) =>
                         setForm({
@@ -659,11 +785,17 @@ export default function Vuelos() {
                         Seleccionar aeronave
                       </option>
 
-                      {aeronaves.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.matricula} - {a.modelo}
-                        </option>
-                      ))}
+                      {aeronaves
+                        .filter(
+                          (a) =>
+                            Number(a.aeropuertoId) ===
+                            Number(form.aeropuertoOrigenId)
+                        )
+                        .map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.matricula} - {a.modelo}
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -804,15 +936,17 @@ export default function Vuelos() {
                     </option>
 
                     {pilotos
-                      .filter((p) => p.estado === "ACTIVO")
-                      .map((piloto) => (
-                        <option
-                          key={piloto.id}
-                          value={piloto.id}
-                        >
-                          {nombrePiloto(piloto)}
-                        </option>
-                      ))}
+                      .filter(
+                        (p) =>
+                          p.estado === "ACTIVO" &&
+                          Number(p.aeropuertoId) ===
+                          Number(vueloSeleccionado.aeropuertoOrigenId) &&
+                          !asignaciones.some(
+                            (a) =>
+                              a.vueloId === vueloSeleccionado.id &&
+                              a.pilotoId === p.id
+                          )
+                      )}
                   </select>
                 </div>
 
